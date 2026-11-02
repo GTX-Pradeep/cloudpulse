@@ -304,3 +304,10 @@ in neither sample.
   changes, including customers 1–9, and those are benchmarked by the guardrail.
 - **Lesson:** "test the workload" means testing the *parameter distribution's
   tails*, not only its typical values. Both earlier S5 results are kept as recorded.
+
+### F-10 · Detection delay reported one interval too low
+The first workload round has no earlier snapshot to diff against, so each query's
+series has one interval fewer than the number of rounds. The evaluation counted
+the fault's position from the round count and reported delays one interval too
+early. Fixed by counting from the end of the series. Results recorded before the
+fix are corrected explicitly (`delay_offset_corrected` in `summary.json`).

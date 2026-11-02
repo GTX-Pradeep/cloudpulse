@@ -107,12 +107,22 @@ def inject(settings: Settings, sc: Scenario) -> NoisyNeighbor | None:
     return None
 
 
-def _flagged(settings: Settings, cfg: detector.DetectorConfig) -> dict[str, int]:
+def _flagged(settings: Settings, cfg: detector.DetectorConfig,
+             fault_rounds: int | None = None) -> dict[str, int]:
+    """Queries currently in regression. With fault_rounds, the value is the
+    number of post-fault intervals up to and including the one where the
+    regression was declared (1 = the first interval after the fault)."""
     out = {}
     for name, qpk in pipeline.tracked_query_pks(settings).items():
-        det = detector.detect(collector.interval_series(settings.meta_dsn, qpk), cfg)
+        series = collector.interval_series(settings.meta_dsn, qpk)
+        det = detector.detect(series, cfg)
         if det.state == "regression":
-            out[name] = det.index
+            if fault_rounds is None:
+                out[name] = det.index
+            else:
+                # The first round has no earlier snapshot to diff against, so the
+                # series has one interval fewer than rounds (F-10). Count from the end.
+                out[name] = det.index - (len(series) - fault_rounds) + 1
     return out
 
 
@@ -151,7 +161,6 @@ def run_scenario(
         runner.run_round()
         collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
         baseline_fp |= set(_flagged(settings, cfg))
-    n_intervals_at_fault = baseline_rounds + 1
 
     nn = inject(settings, sc)
     log(f"[{sc.name}] fault injected")
@@ -162,7 +171,7 @@ def run_scenario(
     finally:
         if nn:
             nn.stop()
-    flagged = {q: idx - n_intervals_at_fault + 1 for q, idx in _flagged(settings, cfg).items()
+    flagged = {q: d for q, d in _flagged(settings, cfg, fault_rounds).items()
                if q not in baseline_fp}
 
     opened = pipeline.detect_and_open_incidents(settings, cfg, scenario=sc.name)
@@ -235,7 +244,7 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
     summary = {
         "environment": envmod.capture(settings.target_dsn, settings.env_label),
         "scale": scale, "seed": seed, "detector": asdict(detector.DetectorConfig()),
-        "label": label, "protocol": kw,
+        "label": label, "protocol": kw, "delay_offset_corrected": True,
         "scenarios": [asdict(x) for x in results],
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
@@ -248,6 +257,13 @@ def enrich(out_dir: Path, meta_dsn: str, fault_rounds: int = 8) -> None:
     field existed) and re-render summary.md. Scenarios ran in order, each on a
     freshly created target database, so the k-th dbid belongs to the k-th scenario."""
     summary = json.loads((out_dir / "summary.json").read_text())
+    if not summary.get("delay_offset_corrected"):
+        # F-10: runs recorded before the fix reported delays one interval too low.
+        for s in summary["scenarios"]:
+            s["flagged_after_fault"] = {q: d + 1 for q, d in s["flagged_after_fault"].items()}
+            if s.get("detection_delay_rounds") is not None:
+                s["detection_delay_rounds"] += 1
+        summary["delay_offset_corrected"] = True
     dbids = [r["dbid"] for r in store.fetch_all(
         meta_dsn, "SELECT dbid FROM queries WHERE template_name IS NOT NULL "
                   "GROUP BY dbid ORDER BY min(id)")]

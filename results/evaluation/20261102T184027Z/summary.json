@@ -81,12 +81,12 @@
       },
       "baseline_false_positives": [],
       "flagged_after_fault": {
-        "orders_by_customer": 2,
-        "latest_orders_for_customer": 2
+        "orders_by_customer": 3,
+        "latest_orders_for_customer": 3
       },
       "expected_query": "orders_by_customer",
       "detected": true,
-      "detection_delay_rounds": 2,
+      "detection_delay_rounds": 3,
       "diagnosis_rules": [
         "selective_seq_scan"
       ],
@@ -599,11 +599,11 @@
       },
       "baseline_false_positives": [],
       "flagged_after_fault": {
-        "recently_updated_orders": 2
+        "recently_updated_orders": 3
       },
       "expected_query": "recently_updated_orders",
       "detected": true,
-      "detection_delay_rounds": 2,
+      "detection_delay_rounds": 3,
       "diagnosis_rules": [
         "selective_seq_scan"
       ],
@@ -841,11 +841,11 @@
         "recently_updated_orders"
       ],
       "flagged_after_fault": {
-        "recent_orders_feed": 2
+        "recent_orders_feed": 3
       },
       "expected_query": "recent_orders_feed",
       "detected": true,
-      "detection_delay_rounds": 2,
+      "detection_delay_rounds": 3,
       "diagnosis_rules": [
         "selective_seq_scan"
       ],
@@ -1172,7 +1172,7 @@
         "recently_updated_orders"
       ],
       "flagged_after_fault": {
-        "monthly_revenue_top_customers": 2
+        "monthly_revenue_top_customers": 3
       },
       "expected_query": null,
       "detected": null,
@@ -1276,5 +1276,6 @@
         "orders_by_customer": 2.228
       }
     }
-  ]
+  ],
+  "delay_offset_corrected": true
 }
