@@ -1,0 +1,23 @@
+[
+  {
+    "k": 1,
+    "n_queries": 30,
+    "families": 6,
+    "recall_at_k_structural": 1.0,
+    "recall_at_k_text_jaccard": 0.633
+  },
+  {
+    "k": 2,
+    "n_queries": 30,
+    "families": 6,
+    "recall_at_k_structural": 1.0,
+    "recall_at_k_text_jaccard": 0.7
+  },
+  {
+    "k": 4,
+    "n_queries": 30,
+    "families": 6,
+    "recall_at_k_structural": 1.0,
+    "recall_at_k_text_jaccard": 0.683
+  }
+]

@@ -1,0 +1,438 @@
+{
+  "spec": {
+    "name": "aa_rep8",
+    "description": "A/A calibration: identical arms",
+    "scale": "default",
+    "seed": 42,
+    "baseline_sql": [
+      "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+      "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+      "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+      "ANALYZE orders"
+    ],
+    "queries": [
+      {
+        "name": "orders_by_customer",
+        "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s",
+        "kind": "read",
+        "params": {
+          "type": "customer_mix",
+          "n": 20
+        },
+        "weight": 30,
+        "compare_results": true
+      },
+      {
+        "name": "order_by_id",
+        "sql": "SELECT id, customer_id, status, amount, created_at FROM orders WHERE id = %s",
+        "kind": "read",
+        "params": {
+          "type": "order_ids",
+          "n": 20
+        },
+        "weight": 30,
+        "compare_results": true
+      },
+      {
+        "name": "recent_orders_feed",
+        "sql": "SELECT id, customer_id, amount FROM orders WHERE created_at > %s ORDER BY created_at DESC LIMIT 50",
+        "kind": "read",
+        "params": {
+          "type": "hours_before_end",
+          "n": 20,
+          "max_hours": 48
+        },
+        "weight": 5,
+        "compare_results": true
+      },
+      {
+        "name": "segment_revenue_for_status",
+        "sql": "SELECT c.segment, count(*), sum(o.amount) FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = %s GROUP BY c.segment",
+        "kind": "read",
+        "params": {
+          "type": "values",
+          "values": [
+            [
+              "backordered"
+            ],
+            [
+              "returned"
+            ],
+            [
+              "cancelled"
+            ]
+          ]
+        },
+        "weight": 1,
+        "compare_results": true
+      },
+      {
+        "name": "touch_order",
+        "sql": "UPDATE orders SET updated_at = updated_at + interval '1 second' WHERE id = %s",
+        "kind": "write",
+        "params": {
+          "type": "order_ids",
+          "n": 20
+        },
+        "weight": 20,
+        "compare_results": true
+      }
+    ],
+    "arm_a": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "arm_b": {
+      "name": "B",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "protocol": {
+      "blocks": 12,
+      "warmup_rounds": 1,
+      "seed": 1008,
+      "statement_timeout_ms": 60000,
+      "lab_session": {
+        "synchronous_commit": "off"
+      }
+    },
+    "target_query": null
+  },
+  "environment": {
+    "captured_at_utc": "2026-11-02T18:58:40+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "58423f1-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v185",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "hypopg": "1.4.0",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "base_database": "cp_base_208141e240df",
+  "base_fingerprint": {
+    "customers": 100000,
+    "customers_hash": "279244885607021745094",
+    "orders": 2000000,
+    "orders_hash": "-358039015515228316005"
+  },
+  "arms": {
+    "A": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.008,
+      "index_bytes": 153231360,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    },
+    "B": {
+      "name": "B",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.004,
+      "index_bytes": 153231360,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    }
+  },
+  "params": {
+    "orders_by_customer": [
+      [
+        "158"
+      ],
+      [
+        "788"
+      ],
+      [
+        "376"
+      ],
+      [
+        "563"
+      ],
+      [
+        "16799"
+      ],
+      [
+        "27745"
+      ],
+      [
+        "15160"
+      ],
+      [
+        "13657"
+      ],
+      [
+        "39308"
+      ],
+      [
+        "15062"
+      ],
+      [
+        "25776"
+      ],
+      [
+        "39498"
+      ],
+      [
+        "83578"
+      ],
+      [
+        "82623"
+      ],
+      [
+        "57465"
+      ],
+      [
+        "79258"
+      ],
+      [
+        "69858"
+      ],
+      [
+        "49338"
+      ],
+      [
+        "54684"
+      ],
+      [
+        "97805"
+      ]
+    ],
+    "order_by_id": [
+      [
+        "1456822"
+      ],
+      [
+        "113001"
+      ],
+      [
+        "1215125"
+      ],
+      [
+        "653832"
+      ],
+      [
+        "524343"
+      ],
+      [
+        "99703"
+      ],
+      [
+        "1283763"
+      ],
+      [
+        "562653"
+      ],
+      [
+        "1654203"
+      ],
+      [
+        "1651692"
+      ],
+      [
+        "1220988"
+      ],
+      [
+        "1217955"
+      ],
+      [
+        "1634261"
+      ],
+      [
+        "1124648"
+      ],
+      [
+        "444981"
+      ],
+      [
+        "995933"
+      ],
+      [
+        "637351"
+      ],
+      [
+        "56318"
+      ],
+      [
+        "1878155"
+      ],
+      [
+        "304525"
+      ]
+    ],
+    "recent_orders_feed": [
+      [
+        "2025-12-31 18:32:07.305723+00:00"
+      ],
+      [
+        "2025-12-30 21:49:01.670275+00:00"
+      ],
+      [
+        "2025-12-30 03:52:09.096757+00:00"
+      ],
+      [
+        "2025-12-30 00:52:15.978368+00:00"
+      ],
+      [
+        "2025-12-30 07:06:19.733977+00:00"
+      ],
+      [
+        "2025-12-30 11:55:52.290371+00:00"
+      ],
+      [
+        "2025-12-31 03:45:25.857101+00:00"
+      ],
+      [
+        "2025-12-30 20:26:56.393485+00:00"
+      ],
+      [
+        "2025-12-31 19:03:22.951255+00:00"
+      ],
+      [
+        "2025-12-30 16:35:45.113473+00:00"
+      ],
+      [
+        "2025-12-31 10:43:35.033626+00:00"
+      ],
+      [
+        "2025-12-30 05:56:38.192864+00:00"
+      ],
+      [
+        "2025-12-31 21:06:47.252934+00:00"
+      ],
+      [
+        "2025-12-30 00:25:09.511014+00:00"
+      ],
+      [
+        "2025-12-30 14:25:20.925068+00:00"
+      ],
+      [
+        "2025-12-30 07:09:04.886696+00:00"
+      ],
+      [
+        "2025-12-30 13:38:24.609056+00:00"
+      ],
+      [
+        "2025-12-31 19:43:17.318882+00:00"
+      ],
+      [
+        "2025-12-31 17:36:46.886887+00:00"
+      ],
+      [
+        "2025-12-31 15:02:16.188676+00:00"
+      ]
+    ],
+    "segment_revenue_for_status": [
+      [
+        "backordered"
+      ],
+      [
+        "returned"
+      ],
+      [
+        "cancelled"
+      ]
+    ],
+    "touch_order": [
+      [
+        "1484620"
+      ],
+      [
+        "612641"
+      ],
+      [
+        "268623"
+      ],
+      [
+        "1561294"
+      ],
+      [
+        "316745"
+      ],
+      [
+        "476873"
+      ],
+      [
+        "944287"
+      ],
+      [
+        "1720802"
+      ],
+      [
+        "1885860"
+      ],
+      [
+        "987453"
+      ],
+      [
+        "1623507"
+      ],
+      [
+        "1330376"
+      ],
+      [
+        "790678"
+      ],
+      [
+        "1155382"
+      ],
+      [
+        "1783292"
+      ],
+      [
+        "264005"
+      ],
+      [
+        "1351747"
+      ],
+      [
+        "1981376"
+      ],
+      [
+        "712625"
+      ],
+      [
+        "1399795"
+      ]
+    ]
+  }
+}

@@ -228,15 +228,24 @@ misestimate finding is now emitted only on table scans, where the error originat
 See D-019. Found by the collector integration test, which could not match a
 template to its pg_stat_statements entry.
 
-### F-5 · The A/A confidence intervals are too narrow on a noisy VM
-Ten A/A repeats on the development VM gave **no** false SUPPORTED verdicts and
-**no** false collateral flags. But the 95% CI contained 1.0 in only about 84% of
-cases, and identical arms differed by up to roughly ±10%. Variation *between* runs
-(fresh twins, other activity on the host) is larger than the variation *within* a
-run that the block bootstrap sees. The 5% and 10% decision margins absorb this,
-which is why verdicts stayed correct. Possible improvements: more blocks, repeated
-runs of the whole experiment, or a margin calibrated from A/A data. See
-`results/calibration/`.
+### F-5 · The A/A confidence intervals are somewhat too narrow on a noisy VM
+Committed calibration (`results/calibration/20261102T185543Z`): 10 repeats ×
+5 queries, with identical arms and fresh twins each repeat.
+- **0 / 50** false SUPPORTED verdicts and **0 / 50** false collateral flags.
+- The 95% CI contained 1.0 in **45 / 50** cases (90%, nominal 95%).
+- Identical arms differed by up to **17.7%** (`touch_order`, a single-row UPDATE).
+  Read queries stayed within about ±15%, mostly within ±8%.
+
+Variation *between* runs (fresh twins, background activity on a shared VM) is
+larger than the variation *within* a run that the block bootstrap sees, so
+single-run intervals are optimistic. The 5% target margin and the 10%
+Bonferroni-adjusted harm margin absorbed this: no wrong verdicts. An earlier,
+uncommitted calibration run that overlapped with other heavy work on the same
+machine gave 42/50 coverage; it was discarded because the machine was not idle.
+**Consequence:** single-run write-latency effects around ±10–15% (such as S4's
++13% on `touch_order`) need replication before being trusted. In S4 the
+mechanism is independently confirmed: HOT updates go from 100% to 0% with the index.
+Possible improvements: repeat whole experiments, or derive margins from A/A data.
 
 ### F-6 · A misleading HOT-update probe
 A first check updated a contiguous range of ids and reported 0% HOT updates even

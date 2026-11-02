@@ -1,0 +1,552 @@
+{
+  "environment": {
+    "captured_at_utc": "2026-11-02T18:59:16+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "58423f1-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v185",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "repeats": 10,
+  "blocks": 12,
+  "queries": [
+    "orders_by_customer",
+    "order_by_id",
+    "recent_orders_feed",
+    "segment_revenue_for_status",
+    "touch_order"
+  ],
+  "n_estimates": 50,
+  "false_supported": 0,
+  "false_collateral": 0,
+  "ci_contains_1": 45,
+  "verdict_counts": {
+    "SUPPORTED": 0,
+    "REJECTED": 13,
+    "INCONCLUSIVE": 37
+  },
+  "max_abs_change_pct": 17.65,
+  "records": [
+    {
+      "repeat": 0,
+      "query": "orders_by_customer",
+      "ratio": 0.9146085030769219,
+      "ci_low": 0.806183483463426,
+      "ci_high": 1.0285334030823674,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 0,
+      "query": "order_by_id",
+      "ratio": 1.0143657598068332,
+      "ci_low": 0.9170920148119581,
+      "ci_high": 1.1142165180732024,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 0,
+      "query": "recent_orders_feed",
+      "ratio": 1.0706235437429308,
+      "ci_low": 1.0072523421742259,
+      "ci_high": 1.1405379402405766,
+      "ci_contains_1": false,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 0,
+      "query": "segment_revenue_for_status",
+      "ratio": 1.012341367384737,
+      "ci_low": 0.9058954282185416,
+      "ci_high": 1.122118306707483,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 0,
+      "query": "touch_order",
+      "ratio": 1.0003671922426034,
+      "ci_low": 0.9402899298628634,
+      "ci_high": 1.06593601911443,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 1,
+      "query": "orders_by_customer",
+      "ratio": 0.9918461244665941,
+      "ci_low": 0.9550060911939463,
+      "ci_high": 1.0293676785838313,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 1,
+      "query": "order_by_id",
+      "ratio": 1.0060654991387588,
+      "ci_low": 0.9430803116296234,
+      "ci_high": 1.055558610162452,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 1,
+      "query": "recent_orders_feed",
+      "ratio": 0.9786545495480277,
+      "ci_low": 0.9116834882562221,
+      "ci_high": 1.0387217242281392,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 1,
+      "query": "segment_revenue_for_status",
+      "ratio": 1.0041584246611825,
+      "ci_low": 0.9168173470154866,
+      "ci_high": 1.100813271323685,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 1,
+      "query": "touch_order",
+      "ratio": 1.0513313336741497,
+      "ci_low": 0.9728787381015733,
+      "ci_high": 1.1393645162513792,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 2,
+      "query": "orders_by_customer",
+      "ratio": 1.0005225819926624,
+      "ci_low": 0.9104594665326506,
+      "ci_high": 1.1094297773752662,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 2,
+      "query": "order_by_id",
+      "ratio": 0.9511315514233202,
+      "ci_low": 0.8929601620357542,
+      "ci_high": 1.0024817536674955,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 2,
+      "query": "recent_orders_feed",
+      "ratio": 0.9215609835929912,
+      "ci_low": 0.8397995887553718,
+      "ci_high": 1.0022323072502355,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 2,
+      "query": "segment_revenue_for_status",
+      "ratio": 1.0537465389537073,
+      "ci_low": 0.981156991324422,
+      "ci_high": 1.1356722205680994,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 2,
+      "query": "touch_order",
+      "ratio": 0.8234874981593918,
+      "ci_low": 0.6717669560877786,
+      "ci_high": 0.99745312018573,
+      "ci_contains_1": false,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 3,
+      "query": "orders_by_customer",
+      "ratio": 0.9454419245456261,
+      "ci_low": 0.8517719527678669,
+      "ci_high": 1.0489962487012072,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 3,
+      "query": "order_by_id",
+      "ratio": 0.9939022166829257,
+      "ci_low": 0.9650797080392111,
+      "ci_high": 1.023936982580419,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 3,
+      "query": "recent_orders_feed",
+      "ratio": 0.9905494943421552,
+      "ci_low": 0.9217666488137446,
+      "ci_high": 1.0782502093512853,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 3,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.9459993739404959,
+      "ci_low": 0.8871444646101412,
+      "ci_high": 1.0206709619615129,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 3,
+      "query": "touch_order",
+      "ratio": 0.9891452195146433,
+      "ci_low": 0.8891365237742735,
+      "ci_high": 1.0776731078857635,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 4,
+      "query": "orders_by_customer",
+      "ratio": 1.065623917808381,
+      "ci_low": 0.964223272724354,
+      "ci_high": 1.175556269981596,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 4,
+      "query": "order_by_id",
+      "ratio": 0.9217990626614092,
+      "ci_low": 0.8520286172437123,
+      "ci_high": 1.0045904169108686,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 4,
+      "query": "recent_orders_feed",
+      "ratio": 1.0742563332792345,
+      "ci_low": 1.0071467064803221,
+      "ci_high": 1.1743190430043173,
+      "ci_contains_1": false,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 4,
+      "query": "segment_revenue_for_status",
+      "ratio": 1.0762378800106658,
+      "ci_low": 0.9501673696664469,
+      "ci_high": 1.238620534396672,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 4,
+      "query": "touch_order",
+      "ratio": 1.0097929230277698,
+      "ci_low": 0.9262722459612016,
+      "ci_high": 1.086897915366113,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 5,
+      "query": "orders_by_customer",
+      "ratio": 1.0148075749716108,
+      "ci_low": 0.9495679673594445,
+      "ci_high": 1.0903990115678481,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 5,
+      "query": "order_by_id",
+      "ratio": 1.0055040053894166,
+      "ci_low": 0.9042323353300572,
+      "ci_high": 1.143802669154204,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 5,
+      "query": "recent_orders_feed",
+      "ratio": 0.9044138289856594,
+      "ci_low": 0.8046208058713663,
+      "ci_high": 0.9880688199330749,
+      "ci_contains_1": false,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 5,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.9865493012223481,
+      "ci_low": 0.9284807484595383,
+      "ci_high": 1.044799880989223,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 5,
+      "query": "touch_order",
+      "ratio": 1.030752878963443,
+      "ci_low": 0.9573018143700742,
+      "ci_high": 1.1323850885941058,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 6,
+      "query": "orders_by_customer",
+      "ratio": 1.0667261489361821,
+      "ci_low": 0.9952311231090873,
+      "ci_high": 1.1616610516724164,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 6,
+      "query": "order_by_id",
+      "ratio": 1.1481163888037047,
+      "ci_low": 0.9675983885830028,
+      "ci_high": 1.41199683683458,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 6,
+      "query": "recent_orders_feed",
+      "ratio": 0.9950991072119247,
+      "ci_low": 0.8850317996727266,
+      "ci_high": 1.1300240040256249,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 6,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.9540518199411235,
+      "ci_low": 0.9036612490182859,
+      "ci_high": 1.006827154424207,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 6,
+      "query": "touch_order",
+      "ratio": 0.9874728109067747,
+      "ci_low": 0.9099351623068218,
+      "ci_high": 1.0716141896865037,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 7,
+      "query": "orders_by_customer",
+      "ratio": 0.938525398919096,
+      "ci_low": 0.8768190368257873,
+      "ci_high": 0.9988280132324124,
+      "ci_contains_1": false,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 7,
+      "query": "order_by_id",
+      "ratio": 0.9744448420845331,
+      "ci_low": 0.9388460817820102,
+      "ci_high": 1.0096978757757766,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 7,
+      "query": "recent_orders_feed",
+      "ratio": 0.9852446807887425,
+      "ci_low": 0.8695505977487594,
+      "ci_high": 1.0824630945324059,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 7,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.9822906465070866,
+      "ci_low": 0.9383583665376385,
+      "ci_high": 1.029426315284662,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 7,
+      "query": "touch_order",
+      "ratio": 1.0642250173355017,
+      "ci_low": 0.9558770637734264,
+      "ci_high": 1.2011040468662466,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 8,
+      "query": "orders_by_customer",
+      "ratio": 0.9247179840188993,
+      "ci_low": 0.8373088858507276,
+      "ci_high": 1.0083031462868768,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 8,
+      "query": "order_by_id",
+      "ratio": 1.0198519763658254,
+      "ci_low": 0.9026016609606681,
+      "ci_high": 1.1679875969794442,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 8,
+      "query": "recent_orders_feed",
+      "ratio": 0.9745259762128995,
+      "ci_low": 0.8974363237409646,
+      "ci_high": 1.0701010417455936,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 8,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.966443678173485,
+      "ci_low": 0.8988134130278799,
+      "ci_high": 1.051426460093146,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 8,
+      "query": "touch_order",
+      "ratio": 0.9581329211944022,
+      "ci_low": 0.8806733437624732,
+      "ci_high": 1.0247407721903705,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 9,
+      "query": "orders_by_customer",
+      "ratio": 0.9826405306543405,
+      "ci_low": 0.9399753570719945,
+      "ci_high": 1.0216929869981228,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 9,
+      "query": "order_by_id",
+      "ratio": 0.9663137482759571,
+      "ci_low": 0.9131011210490315,
+      "ci_high": 1.0256730927630295,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 9,
+      "query": "recent_orders_feed",
+      "ratio": 0.9588441692243809,
+      "ci_low": 0.8929874242014674,
+      "ci_high": 1.0226098243404742,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 9,
+      "query": "segment_revenue_for_status",
+      "ratio": 0.9463885883989972,
+      "ci_low": 0.8760470770893773,
+      "ci_high": 1.0334773644937234,
+      "ci_contains_1": true,
+      "verdict": "INCONCLUSIVE",
+      "false_collateral_flag": false
+    },
+    {
+      "repeat": 9,
+      "query": "touch_order",
+      "ratio": 1.0730888344012677,
+      "ci_low": 0.98215570156718,
+      "ci_high": 1.1786823006357647,
+      "ci_contains_1": true,
+      "verdict": "REJECTED",
+      "false_collateral_flag": false
+    }
+  ]
+}
