@@ -317,7 +317,8 @@ def run_candidate_experiment(
                 "VALUES (%s, %s, %s, %s, %s)",
                 (exp_id, report.label, report.reason, store.jsonb(report.target),
                  store.jsonb({"queries": report.guardrail, "collateral": report.collateral,
-                              "weighted_change_pct": report.weighted_change_pct})))
+                              "weighted_change_pct": report.weighted_change_pct,
+                              "warnings": report.warnings})))
             cur.execute("UPDATE candidates SET status='tested' WHERE id=%s", (candidate_id,))
         conn.commit()
     (res.run_dir / "verdict.json").write_text(__import__("json").dumps(report.to_dict(), indent=2))

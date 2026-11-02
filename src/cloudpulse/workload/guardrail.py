@@ -36,12 +36,16 @@ class GuardrailReport:
     guardrail: list[dict] = field(default_factory=list)
     collateral: list[str] = field(default_factory=list)
     weighted_change_pct: float | None = None
+    # Confidently slower (adjusted CI above 1.0) but not beyond the veto margin.
+    # Informational only: added after the first evaluation showed a +13% write
+    # slowdown passing the pre-registered veto. The decision rule is unchanged.
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
             "label": self.label, "reason": self.reason, "target": self.target,
             "guardrail": self.guardrail, "collateral": self.collateral,
-            "weighted_change_pct": self.weighted_change_pct,
+            "weighted_change_pct": self.weighted_change_pct, "warnings": self.warnings,
         }
 
 
@@ -58,7 +62,7 @@ def evaluate(
 
     m = max(len(guardrail_queries), 1)
     adj_conf = 1 - 0.05 / m
-    g_out, collateral = [], []
+    g_out, collateral, warnings = [], [], []
     weighted_num = weighted_den = 0.0
     for q in [target, *guardrail_queries]:
         eff = t_eff if q is target else verifier.estimate(rows, q.name, confidence=adj_conf)
@@ -71,6 +75,8 @@ def evaluate(
         reg = verifier.is_collateral_regression(eff, harm_margin)
         if reg:
             collateral.append(q.name)
+        elif eff.n_blocks and eff.ci_low > 1.0:
+            warnings.append(q.name)
         g_out.append({**eff.to_dict(), "weight": q.weight, "collateral_regression": reg})
 
     weighted = round(100 * weighted_num / weighted_den, 2) if weighted_den else None
@@ -87,4 +93,4 @@ def evaluate(
         label, reason = t_ver.label, t_ver.reason
         if t_ver.label == verifier.SUPPORTED:
             reason += f"; no collateral regression across {len(guardrail_queries)} guardrail queries"
-    return GuardrailReport(label, reason, t_ver.to_dict(), g_out, collateral, weighted)
+    return GuardrailReport(label, reason, t_ver.to_dict(), g_out, collateral, weighted, warnings)

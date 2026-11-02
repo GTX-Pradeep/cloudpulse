@@ -98,7 +98,7 @@
     <tbody>{% for g in c.guardrail.queries %}
       <tr><td><code>{{ g.query }}</code></td><td class="num">{{ g.weight }}</td><td class="num">{{ g.ratio|pct }}</td>
       <td class="num">[{{ '%.2f'|format(g.ci_low) }}, {{ '%.2f'|format(g.ci_high) }}]</td>
-      <td>{% if g.collateral_regression %}<span class="pill REJECTED">yes</span>{% else %}no{% endif %}</td></tr>
+      <td>{% if g.collateral_regression %}<span class="pill REJECTED">yes</span>{% elif g.ci_low > 1.0 %}<span class="pill INCONCLUSIVE">slower, below veto margin</span>{% else %}no{% endif %}</td></tr>
     {% endfor %}</tbody>
   </table>
   <p class="muted">Frequency-weighted change in tracked workload time: {{ c.guardrail.weighted_change_pct }}% (informational; the verdict uses the per-query veto).</p>

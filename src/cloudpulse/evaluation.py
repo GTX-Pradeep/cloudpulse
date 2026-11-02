@@ -15,6 +15,7 @@ active (every baseline phase, plus the whole s0_control scenario).
 from __future__ import annotations
 
 import json
+import statistics
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -53,6 +54,7 @@ class ScenarioResult:
     diagnosis_correct: bool | None = None
     candidates: list[dict] = field(default_factory=list)
     incidents: list[dict] = field(default_factory=list)
+    observed_ratio: dict[str, float] = field(default_factory=dict)
     seconds: float = 0.0
 
 
@@ -111,6 +113,20 @@ def _flagged(settings: Settings, cfg: detector.DetectorConfig) -> dict[str, int]
         det = detector.detect(collector.interval_series(settings.meta_dsn, qpk), cfg)
         if det.state == "regression":
             out[name] = det.index
+    return out
+
+
+def observed_ratios(meta_dsn: str, query_pks: dict[str, int], fault_rounds: int) -> dict[str, float]:
+    """Ground-truth size of the fault's effect: median interval mean after the
+    fault divided by the median before it, per tracked query. Lets the report
+    tell "missed a regression" apart from "nothing regressed"."""
+    out = {}
+    for name, qpk in query_pks.items():
+        vals = [r["mean_ms"] for r in collector.interval_series(meta_dsn, qpk)
+                if not r["invalid"] and r["mean_ms"] is not None]
+        before, after = vals[:-fault_rounds], vals[-fault_rounds:]
+        if len(before) >= 3 and after:
+            out[name] = round(statistics.median(after) / statistics.median(before), 3)
     return out
 
 
@@ -191,6 +207,8 @@ def run_scenario(
             res.candidates = cands
             res.diagnosis_correct = bool(sc.expected_diagnosis in res.diagnosis_rules and any(
                 (sc.expected_candidate or "") in c["description"] for c in cands))
+    res.observed_ratio = observed_ratios(settings.meta_dsn, pipeline.tracked_query_pks(settings),
+                                         fault_rounds)
     if sc.regressed_query and res.detected is False:
         res.diagnosis_correct = False
     res.seconds = round(time.time() - t0, 1)
@@ -223,6 +241,25 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
     return out
 
 
+def enrich(out_dir: Path, meta_dsn: str, fault_rounds: int = 8) -> None:
+    """Add observed_ratio to a finished evaluation (for runs recorded before the
+    field existed) and re-render summary.md. Scenarios ran in order, each on a
+    freshly created target database, so the k-th dbid belongs to the k-th scenario."""
+    summary = json.loads((out_dir / "summary.json").read_text())
+    dbids = [r["dbid"] for r in store.fetch_all(
+        meta_dsn, "SELECT dbid FROM queries WHERE template_name IS NOT NULL "
+                  "GROUP BY dbid ORDER BY min(id)")]
+    for s, dbid in zip(summary["scenarios"], dbids):
+        if s.get("observed_ratio"):
+            continue
+        pks = {r["template_name"]: r["id"] for r in store.fetch_all(
+            meta_dsn, "SELECT id, template_name FROM queries WHERE dbid = %s "
+                      "AND template_name IS NOT NULL", (dbid,))}
+        s["observed_ratio"] = observed_ratios(meta_dsn, pks, fault_rounds)
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (out_dir / "summary.md").write_text(render_markdown(summary))
+
+
 def _pct(x: float | None) -> str:
     return "n/a" if x is None else f"{(x - 1) * 100:+.1f}%"
 
@@ -238,9 +275,9 @@ def render_markdown(summary: dict) -> str:
         f"{env['host']['mem_total_gb']} GB) | PostgreSQL {env['postgres'].get('server_version')}",
         f"- Dataset: scale `{summary['scale']}`, seed {summary['seed']}",
         "",
-        "| Scenario | Detected (rounds after fault) | False positives before fault | "
-        "Diagnosis | Candidate → verdict |",
-        "|---|---|---|---|---|",
+        "| Scenario | Measured effect of the fault on its query | Detected (rounds after fault) "
+        "| False positives before fault | Diagnosis | Candidate → verdict |",
+        "|---|---|---|---|---|---|",
     ]
     for s in summary["scenarios"]:
         det = ("—" if s["expected_query"] is None
@@ -252,6 +289,8 @@ def render_markdown(summary: dict) -> str:
         diag = ", ".join(s["diagnosis_rules"]) or "—"
         if s["diagnosis_correct"] is not None:
             diag += " ✅" if s["diagnosis_correct"] else " ❌"
+        obs = s.get("observed_ratio", {}).get(s["expected_query"]) if s["expected_query"] else None
+        obs_txt = "—" if obs is None else f"{obs:.2f}× (`{s['expected_query']}`)"
         cands = []
         for inc in (s["incidents"] if s["expected_query"] is None else
                     [i for i in s["incidents"] if i["query"] == s["expected_query"]]):
@@ -262,8 +301,14 @@ def render_markdown(summary: dict) -> str:
                 coll = (c.get("guardrail") or {}).get("collateral") or []
                 if coll:
                     extra += f"; collateral: {', '.join(coll)}"
+                warn = [g for g in (c.get("guardrail") or {}).get("queries", [])
+                        if not g.get("collateral_regression") and g.get("ci_low", 0) > 1.0]
+                for g in warn:
+                    extra += (f"; ⚠ `{g['query']}` {_pct(g['ratio'])} "
+                              f"(CI {_pct(g['ci_low'])}…{_pct(g['ci_high'])}, below veto margin)")
                 cands.append(f"`{c['description']}` → **{label}**{extra}")
-        lines.append(f"| {s['scenario']} | {det} | {fp} | {diag} | {'<br>'.join(cands) or '—'} |")
+        lines.append(f"| {s['scenario']} | {obs_txt} | {det} | {fp} | {diag} | "
+                     f"{'<br>'.join(cands) or '—'} |")
     lines += ["", "Raw evidence (plans, every timed execution, verdict reasons) is in the meta "
               "database and in `results/runs/`."]
     return "\n".join(lines) + "\n"

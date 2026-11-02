@@ -68,3 +68,13 @@ def test_guardrail_veto_and_pass():
     rep_ok = guardrail.evaluate(rows_ok, target, [other])
     assert rep_ok.label == verifier.SUPPORTED and rep_ok.collateral == []
     assert rep_ok.weighted_change_pct < 0
+
+
+def test_guardrail_warns_on_confident_small_slowdown():
+    target = QuerySpec("t", "SELECT 1")
+    other = QuerySpec("o", "SELECT 2")
+    rows = synth_rows(20, 10, 0.3, noise=0.02, seed=1, query="t") + \
+        synth_rows(20, 10, 1.05, noise=0.02, block_noise=0.01, seed=4, query="o")
+    rep = guardrail.evaluate(rows, target, [other])
+    assert rep.label == verifier.SUPPORTED  # below the 10% veto margin: rule unchanged
+    assert rep.warnings == ["o"] and rep.collateral == []
