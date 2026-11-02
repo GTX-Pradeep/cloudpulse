@@ -74,6 +74,12 @@ def sample(spec: dict[str, Any], dsn: str, seed: int) -> Params:
         return customer_mix(dsn, n, seed)
     if kind == "order_ids":
         return order_ids(dsn, n, seed)
+    if kind == "union":
+        # a regular sample plus specific values that must be covered (e.g. the
+        # parameters for which HypoPG predicts a plan change)
+        base = sample(spec["base"], dsn, seed)
+        extra = [tuple(v) for v in spec.get("extra", [])]
+        return base + [p for p in extra if p not in base]
     if kind == "hours_before_end":
         return hours_before_end(dsn, n, seed, float(spec.get("max_hours", 48)))
     raise ValueError(f"unknown parameter sampler {kind!r}")

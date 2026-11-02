@@ -248,7 +248,19 @@ def investigate(settings: Settings, incident_id: int, lab_state: LabState, log=p
 def guardrail_queries(cand: dict, target: QuerySpec) -> list[QuerySpec]:
     if cand["kind"] == "index" and cand["hypopg"]:
         names = cand["hypopg"]["affected_reads"] + cand["hypopg"]["writes_on_table"]
-        return [BY_NAME[n] for n in names if n != target.name]
+        changed = cand["hypopg"].get("changed_params") or {}
+        out = []
+        for n in names:
+            if n == target.name:
+                continue
+            q = _cap(BY_NAME[n])
+            if changed.get(n):
+                # F-7: always benchmark the parameter values whose plan changes
+                q = QuerySpec(q.name, q.sql, q.kind,
+                              {"type": "union", "base": q.params, "extra": changed[n]},
+                              q.weight, q.compare_results)
+            out.append(q)
+        return out
     if cand["kind"] == "analyze":
         table = cand["description"].split()[-1]
         return [w for w in WORKLOAD
@@ -273,7 +285,8 @@ def run_candidate_experiment(
         "JOIN performance_incidents i ON i.id = c.incident_id JOIN queries q ON q.id = i.query_id "
         "WHERE c.id = %s", (candidate_id,))
     target = _cap(BY_NAME[cand["template_name"]])
-    guard = [_cap(g) for g in guardrail_queries(cand, target)]
+    guard = [g if g.params.get("type") == "union" else _cap(g)
+             for g in guardrail_queries(cand, target)]
     protocol = protocol or Protocol(blocks=15, warmup_rounds=1, seed=4242)
     spec = ExperimentSpec(
         name=f"cand{candidate_id}_{target.name}",

@@ -243,3 +243,23 @@ A first check updated a contiguous range of ids and reported 0% HOT updates even
 *without* the extra index. Contiguous rows share pages, and the 10% free space per
 page filled up immediately. Random single-row updates (what the workload actually
 does) showed 100% HOT without the index and 0% with it.
+
+### F-7 · The guardrail missed the `ORDER BY … LIMIT` trap: sampling gap
+In the first full evaluation, scenario S5 (re-adding an index on `created_at`)
+came back **SUPPORTED with no collateral regression**, although manual probing
+had shown that the index makes "latest 10 orders of customer X" 15–60× slower for
+heavy customers whose orders are old.
+- **Cause:** only a few customers trigger the bad plan. HypoPG checked 6
+  parameter values and saw a plan change for 1 of them, so it correctly put the
+  query into the guardrail set. But the benchmark then drew its *own* 20-customer
+  sample, which contained no trap customer. Every plan recorded for both arms used
+  the `customer_id` index, so the guardrail measured only the harmless cases.
+- **Fix:** HypoPG now checks the whole 40-value workload sample and records the
+  *specific parameter values* whose plan changes. The guardrail benchmark always
+  includes those values (`union` sampler). On the S5 lab database, 1 of 40
+  customers (customer 23) changes plan.
+- **Trade-off:** those values are over-represented in the guardrail sample
+  compared with real traffic. The verdict asks "does any parameter regress
+  badly?", which is the conservative question for a change applied in production.
+- The original run is kept in `results/evaluation/` as recorded. The re-run after
+  the fix is a separate, labelled result.

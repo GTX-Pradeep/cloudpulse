@@ -20,7 +20,8 @@ from cloudpulse import db
 from cloudpulse.bench.spec import QuerySpec
 from cloudpulse.plans import tree
 
-MAX_PARAMS = 6
+MAX_PARAMS = 40  # EXPLAIN without ANALYZE is cheap; check the whole workload sample
+MAX_CHANGED_PARAMS = 10
 
 
 @dataclass
@@ -31,6 +32,9 @@ class HypoResult:
     target_cost_after: float
     affected_reads: list[str] = field(default_factory=list)
     writes_on_table: list[str] = field(default_factory=list)
+    # parameter values whose plan changes under the hypothetical index; the
+    # guardrail benchmark must include them (F-7)
+    changed_params: dict[str, list[list]] = field(default_factory=dict)
     details: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -75,15 +79,17 @@ def what_if(
                   for q in workload if q.kind == "read" and q.name != target.name}
         cur.execute("SELECT * FROM hypopg_create_index(%s)", (index_ddl,))
         after_target = _plans(cur, target, target_params)
-        affected, changes = [], {}
+        affected, changes, changed_params = [], {}, {}
         for q in workload:
             if q.kind != "read" or q.name == target.name:
                 continue
-            after = [tree.fingerprint(p) for p in _plans(cur, q, workload_params[q.name])]
-            n_changed = sum(a != b for a, b in zip(before[q.name], after))
-            if n_changed:
+            plist = workload_params[q.name][:MAX_PARAMS]
+            after = [tree.fingerprint(p) for p in _plans(cur, q, plist)]
+            changed = [list(p) for p, a, b in zip(plist, after, before[q.name]) if a != b]
+            if changed:
                 affected.append(q.name)
-                changes[q.name] = n_changed
+                changes[q.name] = len(changed)
+                changed_params[q.name] = changed[:MAX_CHANGED_PARAMS]
         cur.execute("SELECT hypopg_reset()")
     used = any(_uses_hypo(p) for p in after_target)
     writes = [q.name for q in workload if q.kind == "write" and _write_table(q) == table]
@@ -94,5 +100,6 @@ def what_if(
         target_cost_after=sum(p.root.total_cost for p in after_target) / len(after_target),
         affected_reads=affected,
         writes_on_table=writes,
+        changed_params=changed_params,
         details={"plans_changed_per_query": changes, "params_checked": MAX_PARAMS},
     )

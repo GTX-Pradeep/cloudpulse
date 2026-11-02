@@ -730,5 +730,324 @@
       }
     ],
     "seconds": 126.2
+  },
+  {
+    "scenario": "s5_created_at_index_dropped",
+    "title": "Index on orders.created_at dropped",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [
+      "recently_updated_orders"
+    ],
+    "flagged_after_fault": {
+      "recent_orders_feed": 2
+    },
+    "expected_query": "recent_orders_feed",
+    "detected": true,
+    "detection_delay_rounds": 2,
+    "diagnosis_rules": [
+      "selective_seq_scan"
+    ],
+    "diagnosis_correct": true,
+    "candidates": [
+      {
+        "id": 4,
+        "kind": "index",
+        "description": "CREATE INDEX ON orders (created_at)",
+        "status": "tested",
+        "hypopg": {
+          "details": {
+            "params_checked": 6,
+            "plans_changed_per_query": {
+              "latest_orders_for_customer": 1
+            }
+          },
+          "index_ddl": "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)",
+          "affected_reads": [
+            "latest_orders_for_customer"
+          ],
+          "used_by_target": true,
+          "writes_on_table": [
+            "touch_order"
+          ],
+          "target_cost_after": 2.401666666666667,
+          "target_cost_before": 34435.56166666667
+        },
+        "label": "SUPPORTED",
+        "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+        "target": {
+          "label": "SUPPORTED",
+          "effect": {
+            "query": "recent_orders_feed",
+            "ratio": 0.003291786678201325,
+            "ci_low": 0.002897333808979601,
+            "ci_high": 0.0037517423267304432,
+            "n_blocks": 15,
+            "change_pct": -99.67,
+            "confidence": 0.95,
+            "timeouts_a": 0,
+            "timeouts_b": 0,
+            "median_us_a": 122223.41500000001,
+            "median_us_b": 395.365,
+            "block_ratios": [
+              0.0031,
+              0.0021,
+              0.0025,
+              0.0031,
+              0.0053,
+              0.005,
+              0.004,
+              0.0033,
+              0.0038,
+              0.0043,
+              0.0028,
+              0.0025,
+              0.0031,
+              0.0027,
+              0.0034
+            ]
+          },
+          "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+        },
+        "guardrail": {
+          "queries": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.910415841170977,
+              "ci_low": 0.79623573087694,
+              "weight": 20,
+              "ci_high": 1.0066180490550842,
+              "n_blocks": 15,
+              "change_pct": -8.96,
+              "confidence": 0.975,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 453.18,
+              "median_us_b": 413.15,
+              "block_ratios": [
+                0.8321,
+                0.8981,
+                1.0274,
+                0.9183,
+                0.893,
+                0.4773,
+                0.9783,
+                1.1797,
+                1.1606,
+                0.9526,
+                0.7879,
+                0.8947,
+                1.0383,
+                0.951,
+                0.9165
+              ],
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.055496417726832,
+              "ci_low": 0.9464567342088193,
+              "weight": 20,
+              "ci_high": 1.2090119275534417,
+              "n_blocks": 15,
+              "change_pct": 5.55,
+              "confidence": 0.975,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 303.865,
+              "median_us_b": 315.63,
+              "block_ratios": [
+                0.9906,
+                0.9964,
+                1.1759,
+                0.8238,
+                1.9862,
+                1.0853,
+                1.1604,
+                0.9318,
+                1.0777,
+                0.8301,
+                0.7701,
+                1.1864,
+                1.1107,
+                1.0195,
+                1.0903
+              ],
+              "collateral_regression": false
+            }
+          ],
+          "collateral": [],
+          "weighted_change_pct": -97.34
+        }
+      }
+    ],
+    "incidents": [
+      {
+        "incident_id": 5,
+        "query": "recent_orders_feed",
+        "id": 5,
+        "status": "resolved",
+        "outcome": "SUPPORTED: CREATE INDEX ON orders (created_at) (awaiting human review)",
+        "ratio": 4921.173006662373,
+        "plan_changed": null,
+        "diagnoses": [
+          {
+            "rule": "selective_seq_scan",
+            "hypothesis": "Seq Scan on orders examined 2,000,001 rows to keep 9,102 (0.46%). An index on orders(created_at) could let PostgreSQL read only matching rows."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 4,
+            "kind": "index",
+            "description": "CREATE INDEX ON orders (created_at)",
+            "status": "tested",
+            "hypopg": {
+              "details": {
+                "params_checked": 6,
+                "plans_changed_per_query": {
+                  "latest_orders_for_customer": 1
+                }
+              },
+              "index_ddl": "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)",
+              "affected_reads": [
+                "latest_orders_for_customer"
+              ],
+              "used_by_target": true,
+              "writes_on_table": [
+                "touch_order"
+              ],
+              "target_cost_after": 2.401666666666667,
+              "target_cost_before": 34435.56166666667
+            },
+            "label": "SUPPORTED",
+            "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+            "target": {
+              "label": "SUPPORTED",
+              "effect": {
+                "query": "recent_orders_feed",
+                "ratio": 0.003291786678201325,
+                "ci_low": 0.002897333808979601,
+                "ci_high": 0.0037517423267304432,
+                "n_blocks": 15,
+                "change_pct": -99.67,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 122223.41500000001,
+                "median_us_b": 395.365,
+                "block_ratios": [
+                  0.0031,
+                  0.0021,
+                  0.0025,
+                  0.0031,
+                  0.0053,
+                  0.005,
+                  0.004,
+                  0.0033,
+                  0.0038,
+                  0.0043,
+                  0.0028,
+                  0.0025,
+                  0.0031,
+                  0.0027,
+                  0.0034
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+            },
+            "guardrail": {
+              "queries": [
+                {
+                  "query": "latest_orders_for_customer",
+                  "ratio": 0.910415841170977,
+                  "ci_low": 0.79623573087694,
+                  "weight": 20,
+                  "ci_high": 1.0066180490550842,
+                  "n_blocks": 15,
+                  "change_pct": -8.96,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 453.18,
+                  "median_us_b": 413.15,
+                  "block_ratios": [
+                    0.8321,
+                    0.8981,
+                    1.0274,
+                    0.9183,
+                    0.893,
+                    0.4773,
+                    0.9783,
+                    1.1797,
+                    1.1606,
+                    0.9526,
+                    0.7879,
+                    0.8947,
+                    1.0383,
+                    0.951,
+                    0.9165
+                  ],
+                  "collateral_regression": false
+                },
+                {
+                  "query": "touch_order",
+                  "ratio": 1.055496417726832,
+                  "ci_low": 0.9464567342088193,
+                  "weight": 20,
+                  "ci_high": 1.2090119275534417,
+                  "n_blocks": 15,
+                  "change_pct": 5.55,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 303.865,
+                  "median_us_b": 315.63,
+                  "block_ratios": [
+                    0.9906,
+                    0.9964,
+                    1.1759,
+                    0.8238,
+                    1.9862,
+                    1.0853,
+                    1.1604,
+                    0.9318,
+                    1.0777,
+                    0.8301,
+                    0.7701,
+                    1.1864,
+                    1.1107,
+                    1.0195,
+                    1.0903
+                  ],
+                  "collateral_regression": false
+                }
+              ],
+              "collateral": [],
+              "weighted_change_pct": -97.34
+            }
+          }
+        ]
+      },
+      {
+        "incident_id": 4,
+        "query": "recently_updated_orders",
+        "id": 4,
+        "status": "no_action",
+        "outcome": "no testable candidate",
+        "ratio": 2275.544595913697,
+        "plan_changed": false,
+        "diagnoses": [
+          {
+            "rule": "estimation_limit",
+            "hypothesis": "Large row-count misestimate on orders (q-error 28.0) although statistics look fresh: likely correlated columns or an expression the planner cannot estimate."
+          }
+        ],
+        "candidates": []
+      }
+    ],
+    "seconds": 126.3
   }
 ]

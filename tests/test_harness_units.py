@@ -78,3 +78,21 @@ def test_guardrail_warns_on_confident_small_slowdown():
     rep = guardrail.evaluate(rows, target, [other])
     assert rep.label == verifier.SUPPORTED  # below the 10% veto margin: rule unchanged
     assert rep.warnings == ["o"] and rep.collateral == []
+
+
+def test_union_sampler_adds_required_values_once():
+    from cloudpulse.bench import params as pm
+    spec = {"type": "union", "base": {"type": "values", "values": [[1], [2]]}, "extra": [[2], [23]]}
+    assert pm.sample(spec, "unused", 0) == [(1,), (2,), (23,)]
+
+
+def test_guardrail_queries_include_plan_changing_params():
+    from cloudpulse import pipeline
+    from cloudpulse.workload.suite import BY_NAME
+    cand = {"kind": "index", "hypopg": {"affected_reads": ["latest_orders_for_customer"],
+                                        "writes_on_table": ["touch_order"],
+                                        "changed_params": {"latest_orders_for_customer": [[23]]}}}
+    g = {q.name: q for q in pipeline.guardrail_queries(cand, BY_NAME["recent_orders_feed"])}
+    assert g["latest_orders_for_customer"].params["type"] == "union"
+    assert g["latest_orders_for_customer"].params["extra"] == [[23]]
+    assert g["touch_order"].params["type"] == "order_ids"

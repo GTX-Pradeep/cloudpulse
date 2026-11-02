@@ -216,12 +216,13 @@ def run_scenario(
 
 
 def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
-            out_root: Path | None = None, log=print, **kw) -> Path:
-    store.init_schema(settings.meta_dsn, reset=True)
+            out_root: Path | None = None, log=print, reset_meta: bool = True,
+            label: str | None = None, **kw) -> Path:
+    store.init_schema(settings.meta_dsn, reset=reset_meta)
     build_target_template(settings, scale, seed, log=log)
     out_root = out_root or (REPO_ROOT / "results" / "evaluation")
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    out = out_root / stamp
+    out = out_root / (f"{stamp}_{label}" if label else stamp)
     out.mkdir(parents=True)
     results = []
     for name in names or list(SCENARIOS):
@@ -234,6 +235,7 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
     summary = {
         "environment": envmod.capture(settings.target_dsn, settings.env_label),
         "scale": scale, "seed": seed, "detector": asdict(detector.DetectorConfig()),
+        "label": label, "protocol": kw,
         "scenarios": [asdict(x) for x in results],
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
