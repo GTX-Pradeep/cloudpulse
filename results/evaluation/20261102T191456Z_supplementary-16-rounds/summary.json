@@ -57,11 +57,11 @@
       },
       "baseline_false_positives": [],
       "flagged_after_fault": {
-        "segment_revenue_for_status": 8
+        "segment_revenue_for_status": 9
       },
       "expected_query": "segment_revenue_for_status",
       "detected": true,
-      "detection_delay_rounds": 8,
+      "detection_delay_rounds": 9,
       "diagnosis_rules": [
         "stale_statistics"
       ],
@@ -584,5 +584,6 @@
       },
       "seconds": 237.7
     }
-  ]
+  ],
+  "delay_offset_corrected": true
 }

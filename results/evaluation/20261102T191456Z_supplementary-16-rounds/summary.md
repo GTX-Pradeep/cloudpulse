@@ -7,6 +7,6 @@
 
 | Scenario | Measured effect of the fault on its query | Detected (rounds after fault) | False positives before fault | Diagnosis | Candidate → verdict |
 |---|---|---|---|---|---|
-| s2_stale_statistics | 1.84× (`segment_revenue_for_status`) | yes (8) | none | stale_statistics ✅ | `ANALYZE orders` → **SUPPORTED** (target -54.9%) |
+| s2_stale_statistics | 1.84× (`segment_revenue_for_status`) | yes (9) | none | stale_statistics ✅ | `ANALYZE orders` → **SUPPORTED** (target -54.9%) |
 
 Raw evidence (plans, every timed execution, verdict reasons) is in the meta database and in `results/runs/`.
