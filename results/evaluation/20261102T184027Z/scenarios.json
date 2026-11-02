@@ -465,5 +465,41 @@
       }
     ],
     "seconds": 313.0
+  },
+  {
+    "scenario": "s2_stale_statistics",
+    "title": "Bulk load without ANALYZE",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {},
+    "expected_query": "segment_revenue_for_status",
+    "detected": false,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": false,
+    "candidates": [],
+    "incidents": [],
+    "seconds": 64.5
+  },
+  {
+    "scenario": "s3_work_mem_lowered",
+    "title": "work_mem lowered from 64MB to 4MB",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {},
+    "expected_query": "monthly_revenue_top_customers",
+    "detected": false,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": false,
+    "candidates": [],
+    "incidents": [],
+    "seconds": 54.5
   }
 ]
