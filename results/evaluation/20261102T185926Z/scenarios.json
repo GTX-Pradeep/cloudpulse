@@ -1,0 +1,31 @@
+[
+  {
+    "scenario": "s0_control",
+    "title": "No fault (false-positive control)",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {},
+    "expected_query": null,
+    "detected": null,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": null,
+    "candidates": [],
+    "incidents": [],
+    "observed_ratio": {
+      "customer_profile": 0.709,
+      "latest_orders_for_customer": 0.781,
+      "monthly_revenue_top_customers": 1.014,
+      "order_by_id": 0.715,
+      "orders_by_customer": 0.877,
+      "recent_orders_feed": 0.88,
+      "recently_updated_orders": 1.114,
+      "segment_revenue_for_status": 1.053,
+      "touch_order": 0.769
+    },
+    "seconds": 57.0
+  }
+]
