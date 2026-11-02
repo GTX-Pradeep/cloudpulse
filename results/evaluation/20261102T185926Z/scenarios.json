@@ -623,5 +623,34 @@
       "touch_order": 0.562
     },
     "seconds": 66.7
+  },
+  {
+    "scenario": "s3_work_mem_lowered",
+    "title": "work_mem lowered from 64MB to 4MB",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {},
+    "expected_query": "monthly_revenue_top_customers",
+    "detected": false,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": false,
+    "candidates": [],
+    "incidents": [],
+    "observed_ratio": {
+      "customer_profile": 0.779,
+      "latest_orders_for_customer": 0.79,
+      "monthly_revenue_top_customers": 1.032,
+      "order_by_id": 0.857,
+      "orders_by_customer": 1.154,
+      "recent_orders_feed": 0.972,
+      "recently_updated_orders": 0.625,
+      "segment_revenue_for_status": 1.198,
+      "touch_order": 0.765
+    },
+    "seconds": 53.5
   }
 ]
