@@ -1228,5 +1228,217 @@
       "touch_order": 0.577
     },
     "seconds": 112.2
+  },
+  {
+    "scenario": "s6_noisy_neighbor",
+    "title": "CPU/IO contention from another tenant",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {
+      "monthly_revenue_top_customers": 2,
+      "segment_revenue_for_status": 2
+    },
+    "expected_query": null,
+    "detected": null,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": null,
+    "candidates": [],
+    "incidents": [
+      {
+        "incident_id": 5,
+        "query": "monthly_revenue_top_customers",
+        "id": 5,
+        "status": "no_action",
+        "outcome": "no candidate supported (REJECTED)",
+        "ratio": 3.77758421938821,
+        "plan_changed": false,
+        "diagnoses": [
+          {
+            "rule": "work_mem_spill",
+            "hypothesis": "Aggregate spilled to disk (batches=5, disk=1,776 kB) with work_mem=64MB. More memory for this query may avoid the spill."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 5,
+            "kind": "setting",
+            "description": "SET work_mem = '256MB' for this query's session",
+            "status": "tested",
+            "hypopg": null,
+            "label": "REJECTED",
+            "reason": "95% CI of time ratio B/A = [1.039, 1.128] lies entirely above 0.95: no meaningful improvement",
+            "target": {
+              "label": "REJECTED",
+              "effect": {
+                "query": "monthly_revenue_top_customers",
+                "ratio": 1.0767478785280231,
+                "ci_low": 1.0385662476269473,
+                "ci_high": 1.1275585789617883,
+                "n_blocks": 15,
+                "change_pct": 7.67,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 1793318.16,
+                "median_us_b": 1950843.31,
+                "block_ratios": [
+                  1.3768,
+                  0.9981,
+                  1.1022,
+                  1.0127,
+                  1.1392,
+                  0.9918,
+                  1.1002,
+                  0.9817,
+                  1.0584,
+                  1.1164,
+                  1.0807,
+                  1.0179,
+                  1.0488,
+                  1.0878,
+                  1.092
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [1.039, 1.128] lies entirely above 0.95: no meaningful improvement"
+            },
+            "guardrail": {
+              "queries": [],
+              "warnings": [],
+              "collateral": [],
+              "weighted_change_pct": 7.67
+            }
+          }
+        ]
+      },
+      {
+        "incident_id": 6,
+        "query": "segment_revenue_for_status",
+        "id": 6,
+        "status": "resolved",
+        "outcome": "SUPPORTED: CREATE INDEX ON orders (status) (awaiting human review)",
+        "ratio": 2.981872495186807,
+        "plan_changed": false,
+        "diagnoses": [
+          {
+            "rule": "selective_seq_scan",
+            "hypothesis": "Seq Scan on orders examined 2,000,001 rows to keep 79,146 (3.96%). An index on orders(status) could let PostgreSQL read only matching rows."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 6,
+            "kind": "index",
+            "description": "CREATE INDEX ON orders (status)",
+            "status": "tested",
+            "hypopg": {
+              "details": {
+                "params_checked": 40,
+                "plans_changed_per_query": {}
+              },
+              "index_ddl": "CREATE INDEX cp_orders_status_idx ON orders (status)",
+              "affected_reads": [],
+              "changed_params": {},
+              "used_by_target": true,
+              "writes_on_table": [
+                "touch_order"
+              ],
+              "target_cost_after": 12162.046666666667,
+              "target_cost_before": 36075.47666666666
+            },
+            "label": "SUPPORTED",
+            "reason": "95% CI of time ratio B/A = [0.308, 0.359] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+            "target": {
+              "label": "SUPPORTED",
+              "effect": {
+                "query": "segment_revenue_for_status",
+                "ratio": 0.3315785913951234,
+                "ci_low": 0.3078097223356383,
+                "ci_high": 0.358996460392276,
+                "n_blocks": 15,
+                "change_pct": -66.84,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 203547.28,
+                "median_us_b": 86240.18,
+                "block_ratios": [
+                  0.4199,
+                  0.3677,
+                  0.2842,
+                  0.2829,
+                  0.3312,
+                  0.3832,
+                  0.3367,
+                  0.3197,
+                  0.4611,
+                  0.3337,
+                  0.3157,
+                  0.3028,
+                  0.2684,
+                  0.2669,
+                  0.3603
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [0.308, 0.359] lies entirely below 0.95 (>= 5% faster)"
+            },
+            "guardrail": {
+              "queries": [
+                {
+                  "query": "touch_order",
+                  "ratio": 0.9899671681478166,
+                  "ci_low": 0.8393240502770114,
+                  "weight": 20,
+                  "ci_high": 1.1442150466354906,
+                  "n_blocks": 15,
+                  "change_pct": -1.0,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 320.62,
+                  "median_us_b": 320.44,
+                  "block_ratios": [
+                    0.8431,
+                    0.8723,
+                    1.7012,
+                    1.1479,
+                    0.9538,
+                    1.106,
+                    1.0397,
+                    1.0375,
+                    1.0227,
+                    0.9055,
+                    1.5226,
+                    0.4331,
+                    1.149,
+                    0.9884,
+                    0.7583
+                  ],
+                  "collateral_regression": false
+                }
+              ],
+              "warnings": [],
+              "collateral": [],
+              "weighted_change_pct": -64.83
+            }
+          }
+        ]
+      }
+    ],
+    "observed_ratio": {
+      "customer_profile": 1.253,
+      "latest_orders_for_customer": 0.915,
+      "monthly_revenue_top_customers": 4.09,
+      "order_by_id": 0.869,
+      "orders_by_customer": 1.681,
+      "recent_orders_feed": 0.961,
+      "recently_updated_orders": 1.083,
+      "segment_revenue_for_status": 2.845,
+      "touch_order": 0.756
+    },
+    "seconds": 204.4
   }
 ]
