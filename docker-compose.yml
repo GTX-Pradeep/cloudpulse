@@ -1,0 +1,71 @@
+# CloudPulse local stack: three separate PostgreSQL servers.
+#   target-db : the "production" database being monitored. Workload runs here.
+#   lab-db    : where experiments run. CloudPulse never runs experiments on target.
+#   meta-db   : CloudPulse's own evidence store (incidents, plans, runs, verdicts).
+# Resource limits are fixed so benchmark conditions are explicit (see docs/decisions.md).
+
+x-pg-common: &pg-common
+  build: ./docker/postgres
+  image: cloudpulse-postgres:17
+  env_file: .env
+  shm_size: 256mb
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+    interval: 2s
+    timeout: 3s
+    retries: 30
+
+x-bench-flags: &bench-flags
+  - postgres
+  - -c
+  - shared_preload_libraries=pg_stat_statements
+  - -c
+  - compute_query_id=on
+  - -c
+  - pg_stat_statements.track=top
+  - -c
+  - pg_stat_statements.max=5000
+  - -c
+  - shared_buffers=256MB
+  - -c
+  - track_io_timing=on
+  - -c
+  - jit=off
+
+services:
+  target-db:
+    <<: *pg-common
+    container_name: cp-target-db
+    environment:
+      POSTGRES_DB: target
+    ports: ["5433:5432"]
+    cpus: "2"
+    mem_limit: 2g
+    command: *bench-flags
+    volumes: [target_data:/var/lib/postgresql/data]
+
+  lab-db:
+    <<: *pg-common
+    container_name: cp-lab-db
+    environment:
+      POSTGRES_DB: lab
+    ports: ["5434:5432"]
+    cpus: "2"
+    mem_limit: 2g
+    command: *bench-flags
+    volumes: [lab_data:/var/lib/postgresql/data]
+
+  meta-db:
+    <<: *pg-common
+    container_name: cp-meta-db
+    environment:
+      POSTGRES_DB: cloudpulse
+    ports: ["5435:5432"]
+    mem_limit: 1g
+    volumes: [meta_data:/var/lib/postgresql/data]
+
+volumes:
+  target_data:
+  lab_data:
+  meta_data:

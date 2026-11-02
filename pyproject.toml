@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloudpulse"
+version = "0.1.0"
+description = "Experiment-validated PostgreSQL query regression remediation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "psycopg[binary]>=3.1",
+  "numpy>=1.26",
+  "pglast>=6",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+  "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+cloudpulse = "cloudpulse.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cloudpulse = ["**/*.sql", "api/templates/*.html", "api/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["db: needs the PostgreSQL servers from docker-compose"]
