@@ -1,0 +1,109 @@
+{
+  "label": "SUPPORTED",
+  "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+  "target": {
+    "label": "SUPPORTED",
+    "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)",
+    "effect": {
+      "query": "latest_orders_for_customer",
+      "n_blocks": 15,
+      "ratio": 0.0025296929493627686,
+      "ci_low": 0.002117485482982011,
+      "ci_high": 0.003009764465886306,
+      "confidence": 0.95,
+      "median_us_a": 174509.145,
+      "median_us_b": 378.87,
+      "block_ratios": [
+        0.0048,
+        0.0034,
+        0.0021,
+        0.0014,
+        0.002,
+        0.0015,
+        0.0026,
+        0.0028,
+        0.0024,
+        0.0016,
+        0.0029,
+        0.0038,
+        0.0028,
+        0.0024,
+        0.0038
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -99.75
+    }
+  },
+  "guardrail": [
+    {
+      "query": "orders_by_customer",
+      "n_blocks": 15,
+      "ratio": 0.00921035462190709,
+      "ci_low": 0.008430373899326793,
+      "ci_high": 0.010124882015080824,
+      "confidence": 0.975,
+      "median_us_a": 102295.425,
+      "median_us_b": 640.705,
+      "block_ratios": [
+        0.0096,
+        0.0107,
+        0.0129,
+        0.0102,
+        0.0078,
+        0.0093,
+        0.0079,
+        0.0105,
+        0.0088,
+        0.0083,
+        0.008,
+        0.0074,
+        0.0119,
+        0.0084,
+        0.0081
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -99.08,
+      "weight": 30,
+      "collateral_regression": false
+    },
+    {
+      "query": "touch_order",
+      "n_blocks": 15,
+      "ratio": 1.13517645264218,
+      "ci_low": 1.002870977749505,
+      "ci_high": 1.3218561581104395,
+      "confidence": 0.975,
+      "median_us_a": 363.95500000000004,
+      "median_us_b": 373.875,
+      "block_ratios": [
+        1.1485,
+        1.1297,
+        0.85,
+        1.0993,
+        1.2303,
+        1.2362,
+        2.1984,
+        1.1119,
+        0.9181,
+        1.594,
+        1.076,
+        1.1165,
+        1.0005,
+        1.0326,
+        0.818
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": 13.52,
+      "weight": 20,
+      "collateral_regression": false
+    }
+  ],
+  "collateral": [],
+  "weighted_change_pct": -99.31,
+  "warnings": [
+    "touch_order"
+  ]
+}

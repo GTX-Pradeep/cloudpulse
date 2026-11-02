@@ -27,5 +27,572 @@
       "touch_order": 0.769
     },
     "seconds": 57.0
+  },
+  {
+    "scenario": "s1_dropped_fk_index",
+    "title": "Index on orders.customer_id dropped",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {
+      "latest_orders_for_customer": 2,
+      "orders_by_customer": 1
+    },
+    "expected_query": "orders_by_customer",
+    "detected": true,
+    "detection_delay_rounds": 1,
+    "diagnosis_rules": [
+      "selective_seq_scan"
+    ],
+    "diagnosis_correct": true,
+    "candidates": [
+      {
+        "id": 1,
+        "kind": "index",
+        "description": "CREATE INDEX ON orders (customer_id)",
+        "status": "tested",
+        "hypopg": {
+          "details": {
+            "params_checked": 40,
+            "plans_changed_per_query": {
+              "latest_orders_for_customer": 39
+            }
+          },
+          "index_ddl": "CREATE INDEX cp_orders_customer_id_idx ON orders (customer_id)",
+          "affected_reads": [
+            "latest_orders_for_customer"
+          ],
+          "changed_params": {
+            "latest_orders_for_customer": [
+              [
+                799
+              ],
+              [
+                650
+              ],
+              [
+                495
+              ],
+              [
+                526
+              ],
+              [
+                877
+              ],
+              [
+                683
+              ],
+              [
+                293
+              ],
+              [
+                27734
+              ],
+              [
+                3343
+              ],
+              [
+                35423
+              ]
+            ]
+          },
+          "used_by_target": true,
+          "writes_on_table": [
+            "touch_order"
+          ],
+          "target_cost_after": 373.65825,
+          "target_cost_before": 34376.265
+        },
+        "label": "SUPPORTED",
+        "reason": "95% CI of time ratio B/A = [0.005, 0.006] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+        "target": {
+          "label": "SUPPORTED",
+          "effect": {
+            "query": "orders_by_customer",
+            "ratio": 0.0050564681875037735,
+            "ci_low": 0.004538152273508782,
+            "ci_high": 0.005667151556604299,
+            "n_blocks": 15,
+            "change_pct": -99.49,
+            "confidence": 0.95,
+            "timeouts_a": 0,
+            "timeouts_b": 0,
+            "median_us_a": 98410.29000000001,
+            "median_us_b": 451.06,
+            "block_ratios": [
+              0.0044,
+              0.0038,
+              0.0071,
+              0.0041,
+              0.0042,
+              0.0038,
+              0.0047,
+              0.0046,
+              0.006,
+              0.005,
+              0.0071,
+              0.0076,
+              0.0056,
+              0.0051,
+              0.0046
+            ]
+          },
+          "reason": "95% CI of time ratio B/A = [0.005, 0.006] lies entirely below 0.95 (>= 5% faster)"
+        },
+        "guardrail": {
+          "queries": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.0036015419405476365,
+              "ci_low": 0.0032313436280539364,
+              "weight": 20,
+              "ci_high": 0.004061253250026003,
+              "n_blocks": 15,
+              "change_pct": -99.64,
+              "confidence": 0.975,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 189031.02000000002,
+              "median_us_b": 531.915,
+              "block_ratios": [
+                0.0057,
+                0.0037,
+                0.0038,
+                0.0038,
+                0.0041,
+                0.004,
+                0.0032,
+                0.0046,
+                0.0033,
+                0.0027,
+                0.0029,
+                0.003,
+                0.0032,
+                0.0029,
+                0.0044
+              ],
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.0864396731702928,
+              "ci_low": 0.9955232596283994,
+              "weight": 20,
+              "ci_high": 1.2388125043695124,
+              "n_blocks": 15,
+              "change_pct": 8.64,
+              "confidence": 0.975,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 273.78499999999997,
+              "median_us_b": 287.02,
+              "block_ratios": [
+                0.9752,
+                1.6228,
+                1.9789,
+                1.0278,
+                0.9757,
+                1.0746,
+                0.9831,
+                1.0328,
+                1.0229,
+                0.9956,
+                0.997,
+                0.9341,
+                1.0129,
+                1.0085,
+                1.0446
+              ],
+              "collateral_regression": false
+            }
+          ],
+          "warnings": [],
+          "collateral": [],
+          "weighted_change_pct": -99.49
+        }
+      }
+    ],
+    "incidents": [
+      {
+        "incident_id": 2,
+        "query": "orders_by_customer",
+        "id": 2,
+        "status": "resolved",
+        "outcome": "SUPPORTED: CREATE INDEX ON orders (customer_id) (awaiting human review)",
+        "ratio": 671.283700524884,
+        "plan_changed": true,
+        "diagnoses": [
+          {
+            "rule": "selective_seq_scan",
+            "hypothesis": "Seq Scan on orders examined 1,999,998 rows to keep 210 (0.01%). An index on orders(customer_id) could let PostgreSQL read only matching rows."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 1,
+            "kind": "index",
+            "description": "CREATE INDEX ON orders (customer_id)",
+            "status": "tested",
+            "hypopg": {
+              "details": {
+                "params_checked": 40,
+                "plans_changed_per_query": {
+                  "latest_orders_for_customer": 39
+                }
+              },
+              "index_ddl": "CREATE INDEX cp_orders_customer_id_idx ON orders (customer_id)",
+              "affected_reads": [
+                "latest_orders_for_customer"
+              ],
+              "changed_params": {
+                "latest_orders_for_customer": [
+                  [
+                    799
+                  ],
+                  [
+                    650
+                  ],
+                  [
+                    495
+                  ],
+                  [
+                    526
+                  ],
+                  [
+                    877
+                  ],
+                  [
+                    683
+                  ],
+                  [
+                    293
+                  ],
+                  [
+                    27734
+                  ],
+                  [
+                    3343
+                  ],
+                  [
+                    35423
+                  ]
+                ]
+              },
+              "used_by_target": true,
+              "writes_on_table": [
+                "touch_order"
+              ],
+              "target_cost_after": 373.65825,
+              "target_cost_before": 34376.265
+            },
+            "label": "SUPPORTED",
+            "reason": "95% CI of time ratio B/A = [0.005, 0.006] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+            "target": {
+              "label": "SUPPORTED",
+              "effect": {
+                "query": "orders_by_customer",
+                "ratio": 0.0050564681875037735,
+                "ci_low": 0.004538152273508782,
+                "ci_high": 0.005667151556604299,
+                "n_blocks": 15,
+                "change_pct": -99.49,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 98410.29000000001,
+                "median_us_b": 451.06,
+                "block_ratios": [
+                  0.0044,
+                  0.0038,
+                  0.0071,
+                  0.0041,
+                  0.0042,
+                  0.0038,
+                  0.0047,
+                  0.0046,
+                  0.006,
+                  0.005,
+                  0.0071,
+                  0.0076,
+                  0.0056,
+                  0.0051,
+                  0.0046
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [0.005, 0.006] lies entirely below 0.95 (>= 5% faster)"
+            },
+            "guardrail": {
+              "queries": [
+                {
+                  "query": "latest_orders_for_customer",
+                  "ratio": 0.0036015419405476365,
+                  "ci_low": 0.0032313436280539364,
+                  "weight": 20,
+                  "ci_high": 0.004061253250026003,
+                  "n_blocks": 15,
+                  "change_pct": -99.64,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 189031.02000000002,
+                  "median_us_b": 531.915,
+                  "block_ratios": [
+                    0.0057,
+                    0.0037,
+                    0.0038,
+                    0.0038,
+                    0.0041,
+                    0.004,
+                    0.0032,
+                    0.0046,
+                    0.0033,
+                    0.0027,
+                    0.0029,
+                    0.003,
+                    0.0032,
+                    0.0029,
+                    0.0044
+                  ],
+                  "collateral_regression": false
+                },
+                {
+                  "query": "touch_order",
+                  "ratio": 1.0864396731702928,
+                  "ci_low": 0.9955232596283994,
+                  "weight": 20,
+                  "ci_high": 1.2388125043695124,
+                  "n_blocks": 15,
+                  "change_pct": 8.64,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 273.78499999999997,
+                  "median_us_b": 287.02,
+                  "block_ratios": [
+                    0.9752,
+                    1.6228,
+                    1.9789,
+                    1.0278,
+                    0.9757,
+                    1.0746,
+                    0.9831,
+                    1.0328,
+                    1.0229,
+                    0.9956,
+                    0.997,
+                    0.9341,
+                    1.0129,
+                    1.0085,
+                    1.0446
+                  ],
+                  "collateral_regression": false
+                }
+              ],
+              "warnings": [],
+              "collateral": [],
+              "weighted_change_pct": -99.49
+            }
+          }
+        ]
+      },
+      {
+        "incident_id": 1,
+        "query": "latest_orders_for_customer",
+        "id": 1,
+        "status": "resolved",
+        "outcome": "SUPPORTED: CREATE INDEX ON orders (customer_id, created_at) (awaiting human review)",
+        "ratio": 968.4808180845517,
+        "plan_changed": true,
+        "diagnoses": [
+          {
+            "rule": "ordered_index_walk",
+            "hypothesis": "Index Scan on orders_created_at_idx walked 1,962,570 rows and filtered out almost all of them. The planner likely assumed matching rows are spread evenly; a composite index orders(customer_id, created_at) would find them directly."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 2,
+            "kind": "index",
+            "description": "CREATE INDEX ON orders (customer_id, created_at)",
+            "status": "tested",
+            "hypopg": {
+              "details": {
+                "params_checked": 40,
+                "plans_changed_per_query": {
+                  "orders_by_customer": 40
+                }
+              },
+              "index_ddl": "CREATE INDEX cp_orders_customer_id_created_at_idx ON orders (customer_id, created_at)",
+              "affected_reads": [
+                "orders_by_customer"
+              ],
+              "changed_params": {
+                "orders_by_customer": [
+                  [
+                    799
+                  ],
+                  [
+                    650
+                  ],
+                  [
+                    495
+                  ],
+                  [
+                    23
+                  ],
+                  [
+                    526
+                  ],
+                  [
+                    877
+                  ],
+                  [
+                    683
+                  ],
+                  [
+                    293
+                  ],
+                  [
+                    27734
+                  ],
+                  [
+                    3343
+                  ]
+                ]
+              },
+              "used_by_target": true,
+              "writes_on_table": [
+                "touch_order"
+              ],
+              "target_cost_after": 41.1015,
+              "target_cost_before": 16145.863500000001
+            },
+            "label": "SUPPORTED",
+            "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+            "target": {
+              "label": "SUPPORTED",
+              "effect": {
+                "query": "latest_orders_for_customer",
+                "ratio": 0.0025296929493627686,
+                "ci_low": 0.002117485482982011,
+                "ci_high": 0.003009764465886306,
+                "n_blocks": 15,
+                "change_pct": -99.75,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 174509.145,
+                "median_us_b": 378.87,
+                "block_ratios": [
+                  0.0048,
+                  0.0034,
+                  0.0021,
+                  0.0014,
+                  0.002,
+                  0.0015,
+                  0.0026,
+                  0.0028,
+                  0.0024,
+                  0.0016,
+                  0.0029,
+                  0.0038,
+                  0.0028,
+                  0.0024,
+                  0.0038
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)"
+            },
+            "guardrail": {
+              "queries": [
+                {
+                  "query": "orders_by_customer",
+                  "ratio": 0.00921035462190709,
+                  "ci_low": 0.008430373899326793,
+                  "weight": 30,
+                  "ci_high": 0.010124882015080824,
+                  "n_blocks": 15,
+                  "change_pct": -99.08,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 102295.425,
+                  "median_us_b": 640.705,
+                  "block_ratios": [
+                    0.0096,
+                    0.0107,
+                    0.0129,
+                    0.0102,
+                    0.0078,
+                    0.0093,
+                    0.0079,
+                    0.0105,
+                    0.0088,
+                    0.0083,
+                    0.008,
+                    0.0074,
+                    0.0119,
+                    0.0084,
+                    0.0081
+                  ],
+                  "collateral_regression": false
+                },
+                {
+                  "query": "touch_order",
+                  "ratio": 1.13517645264218,
+                  "ci_low": 1.002870977749505,
+                  "weight": 20,
+                  "ci_high": 1.3218561581104395,
+                  "n_blocks": 15,
+                  "change_pct": 13.52,
+                  "confidence": 0.975,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 363.95500000000004,
+                  "median_us_b": 373.875,
+                  "block_ratios": [
+                    1.1485,
+                    1.1297,
+                    0.85,
+                    1.0993,
+                    1.2303,
+                    1.2362,
+                    2.1984,
+                    1.1119,
+                    0.9181,
+                    1.594,
+                    1.076,
+                    1.1165,
+                    1.0005,
+                    1.0326,
+                    0.818
+                  ],
+                  "collateral_regression": false
+                }
+              ],
+              "warnings": [
+                "touch_order"
+              ],
+              "collateral": [],
+              "weighted_change_pct": -99.31
+            }
+          }
+        ]
+      }
+    ],
+    "observed_ratio": {
+      "customer_profile": 1.018,
+      "latest_orders_for_customer": 868.992,
+      "monthly_revenue_top_customers": 1.317,
+      "order_by_id": 0.847,
+      "orders_by_customer": 817.097,
+      "recent_orders_feed": 0.848,
+      "recently_updated_orders": 0.689,
+      "segment_revenue_for_status": 1.346,
+      "touch_order": 0.757
+    },
+    "seconds": 328.8
   }
 ]
