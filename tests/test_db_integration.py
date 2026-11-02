@@ -164,3 +164,19 @@ def test_meta_schema_rejects_impossible_states(test_meta_dsn):
     import psycopg
     with pytest.raises(psycopg.errors.CheckViolation):
         store.execute(test_meta_dsn, "INSERT INTO jobs (kind, payload) VALUES ('delete_prod', '{}')")
+
+
+def test_tracked_queries_belong_to_current_target_only(test_settings):
+    """F-8: the same template seen on an older target database must be ignored."""
+    from cloudpulse import pipeline
+    s = test_settings
+    store.execute(s.meta_dsn, "DELETE FROM queries WHERE template_name = 'customer_profile'")
+    old = store.execute(s.meta_dsn, "INSERT INTO queries (queryid, dbid, userid, query_text, template_name) "
+                                    "VALUES (1, 4242424, 10, 'x', 'customer_profile') RETURNING id")[0]
+    cur_dbid = pipeline.target_dbid(s.target_dsn)
+    new = store.execute(
+        s.meta_dsn,
+        "INSERT INTO queries (queryid, dbid, userid, query_text, template_name) "
+        "VALUES (2, %s, 10, 'x', 'customer_profile') RETURNING id", (cur_dbid,))[0]
+    pks = pipeline.tracked_query_pks(s)
+    assert pks["customer_profile"] == new and old not in pks.values()

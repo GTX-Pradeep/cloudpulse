@@ -59,7 +59,18 @@
       "diagnosis_correct": null,
       "candidates": [],
       "incidents": [],
-      "seconds": 50.6
+      "seconds": 50.6,
+      "observed_ratio": {
+        "recently_updated_orders": 0.717,
+        "segment_revenue_for_status": 1.029,
+        "order_by_id": 0.852,
+        "orders_by_customer": 0.726,
+        "recent_orders_feed": 0.857,
+        "latest_orders_for_customer": 0.543,
+        "touch_order": 0.828,
+        "customer_profile": 0.838,
+        "monthly_revenue_top_customers": 1.007
+      }
     },
     {
       "scenario": "s1_dropped_fk_index",
@@ -508,7 +519,18 @@
           ]
         }
       ],
-      "seconds": 313.0
+      "seconds": 313.0,
+      "observed_ratio": {
+        "customer_profile": 0.896,
+        "touch_order": 0.559,
+        "recently_updated_orders": 0.971,
+        "orders_by_customer": 532.597,
+        "latest_orders_for_customer": 672.768,
+        "recent_orders_feed": 0.78,
+        "order_by_id": 1.1,
+        "monthly_revenue_top_customers": 1.237,
+        "segment_revenue_for_status": 1.179
+      }
     },
     {
       "scenario": "s2_stale_statistics",
@@ -526,7 +548,18 @@
       "diagnosis_correct": false,
       "candidates": [],
       "incidents": [],
-      "seconds": 64.5
+      "seconds": 64.5,
+      "observed_ratio": {
+        "order_by_id": 0.721,
+        "segment_revenue_for_status": 1.748,
+        "customer_profile": 0.832,
+        "monthly_revenue_top_customers": 1.275,
+        "recently_updated_orders": 1.003,
+        "recent_orders_feed": 1.028,
+        "touch_order": 0.972,
+        "latest_orders_for_customer": 0.991,
+        "orders_by_customer": 1.155
+      }
     },
     {
       "scenario": "s3_work_mem_lowered",
@@ -544,7 +577,18 @@
       "diagnosis_correct": false,
       "candidates": [],
       "incidents": [],
-      "seconds": 54.5
+      "seconds": 54.5,
+      "observed_ratio": {
+        "touch_order": 0.83,
+        "segment_revenue_for_status": 0.989,
+        "order_by_id": 0.877,
+        "latest_orders_for_customer": 0.836,
+        "recently_updated_orders": 0.97,
+        "monthly_revenue_top_customers": 0.945,
+        "customer_profile": 1.114,
+        "orders_by_customer": 1.022,
+        "recent_orders_feed": 0.981
+      }
     },
     {
       "scenario": "s4_updated_at_index_dropped",
@@ -773,7 +817,18 @@
           ]
         }
       ],
-      "seconds": 126.2
+      "seconds": 126.2,
+      "observed_ratio": {
+        "recent_orders_feed": 1.108,
+        "customer_profile": 0.752,
+        "touch_order": 0.562,
+        "segment_revenue_for_status": 1.108,
+        "order_by_id": 0.74,
+        "monthly_revenue_top_customers": 1.06,
+        "latest_orders_for_customer": 0.768,
+        "recently_updated_orders": 2291.148,
+        "orders_by_customer": 1.152
+      }
     },
     {
       "scenario": "s5_created_at_index_dropped",
@@ -1092,7 +1147,18 @@
           "candidates": []
         }
       ],
-      "seconds": 126.3
+      "seconds": 126.3,
+      "observed_ratio": {
+        "recently_updated_orders": 1.088,
+        "order_by_id": 0.834,
+        "latest_orders_for_customer": 0.692,
+        "customer_profile": 0.82,
+        "segment_revenue_for_status": 1.331,
+        "monthly_revenue_top_customers": 1.047,
+        "touch_order": 0.797,
+        "recent_orders_feed": 5055.164,
+        "orders_by_customer": 0.943
+      }
     },
     {
       "scenario": "s6_noisy_neighbor",
@@ -1197,7 +1263,18 @@
           ]
         }
       ],
-      "seconds": 179.7
+      "seconds": 179.7,
+      "observed_ratio": {
+        "order_by_id": 0.776,
+        "segment_revenue_for_status": 3.058,
+        "recently_updated_orders": 1.56,
+        "touch_order": 1.071,
+        "customer_profile": 1.173,
+        "latest_orders_for_customer": 0.68,
+        "recent_orders_feed": 1.029,
+        "monthly_revenue_top_customers": 4.756,
+        "orders_by_customer": 2.228
+      }
     }
   ]
 }

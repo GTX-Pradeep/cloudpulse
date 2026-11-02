@@ -67,9 +67,23 @@ def capture_baseline_plans(settings: Settings, query_pks: dict[str, int]) -> Non
             )
 
 
+def target_dbid(target_dsn: str) -> int:
+    with db.cursor(target_dsn) as cur:
+        cur.execute("SELECT oid FROM pg_database WHERE datname = current_database()")
+        return int(cur.fetchone()[0])
+
+
 def tracked_query_pks(settings: Settings) -> dict[str, int]:
+    """Template name -> queries.id for the *current* target database.
+
+    Filtering by dbid matters (F-8): the meta database keeps queries from every
+    target database it has seen, and the same template exists once per database.
+    """
     rows = store.fetch_all(
-        settings.meta_dsn, "SELECT id, template_name FROM queries WHERE template_name IS NOT NULL"
+        settings.meta_dsn,
+        "SELECT DISTINCT ON (template_name) id, template_name FROM queries "
+        "WHERE template_name IS NOT NULL AND dbid = %s ORDER BY template_name, id DESC",
+        (target_dbid(settings.target_dsn),),
     )
     return {r["template_name"]: r["id"] for r in rows}
 

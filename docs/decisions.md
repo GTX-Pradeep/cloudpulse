@@ -263,3 +263,19 @@ heavy customers whose orders are old.
   badly?", which is the conservative question for a change applied in production.
 - The original run is kept in `results/evaluation/` as recorded. The re-run after
   the fix is a separate, labelled result.
+
+### F-8 · Bookkeeping bug: incidents attributed to an earlier scenario's query
+The first full evaluation (`results/evaluation/20261102T184027Z`, kept but marked
+superseded) showed "false positives before the fault" in S5 and S6. They were not
+real. Each scenario recreates the target database, so the meta database holds one
+`queries` row per template *per target database*. `tracked_query_pks` selected
+by template name without filtering by database and without an `ORDER BY`, so it
+sometimes returned a previous scenario's row. S4's genuine regression was
+therefore re-reported in S5 and S6, and two extra incidents were opened. Their
+investigations ran against the correct, current database and ended in "no
+action", so no verdict was wrong, but the detection bookkeeping was.
+- **Fix:** filter by the current target's `dbid` (`pipeline.target_dbid`), with an
+  integration test. The full evaluation was re-run with the fix.
+- **Lesson:** an identifier that is unique only within a scope (here
+  `queryid` per database) needs that scope in every lookup, and the test suite
+  needs a case with two scopes.
