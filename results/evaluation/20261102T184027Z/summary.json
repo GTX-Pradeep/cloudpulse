@@ -1,0 +1,1203 @@
+{
+  "environment": {
+    "captured_at_utc": "2026-11-02T18:55:42+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "8b77548-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v185",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "65536kB",
+      "extensions": {
+        "pg_stat_statements": "1.10",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "scale": "default",
+  "seed": 42,
+  "detector": {
+    "window": 20,
+    "min_baseline": 8,
+    "min_calls": 1,
+    "z_threshold": 4.0,
+    "min_ratio": 1.5,
+    "rel_floor": 0.05,
+    "abs_floor_ms": 0.05,
+    "sustain_k": 3,
+    "sustain_n": 4
+  },
+  "scenarios": [
+    {
+      "scenario": "s0_control",
+      "title": "No fault (false-positive control)",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {},
+      "expected_query": null,
+      "detected": null,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": null,
+      "candidates": [],
+      "incidents": [],
+      "seconds": 50.6
+    },
+    {
+      "scenario": "s1_dropped_fk_index",
+      "title": "Index on orders.customer_id dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {
+        "orders_by_customer": 2,
+        "latest_orders_for_customer": 2
+      },
+      "expected_query": "orders_by_customer",
+      "detected": true,
+      "detection_delay_rounds": 2,
+      "diagnosis_rules": [
+        "selective_seq_scan"
+      ],
+      "diagnosis_correct": true,
+      "candidates": [
+        {
+          "id": 1,
+          "kind": "index",
+          "description": "CREATE INDEX ON orders (customer_id)",
+          "status": "tested",
+          "hypopg": {
+            "details": {
+              "params_checked": 6,
+              "plans_changed_per_query": {
+                "latest_orders_for_customer": 5
+              }
+            },
+            "index_ddl": "CREATE INDEX cp_orders_customer_id_idx ON orders (customer_id)",
+            "affected_reads": [
+              "latest_orders_for_customer"
+            ],
+            "used_by_target": true,
+            "writes_on_table": [
+              "touch_order"
+            ],
+            "target_cost_after": 1541.8316666666667,
+            "target_cost_before": 34418.170000000006
+          },
+          "label": "SUPPORTED",
+          "reason": "95% CI of time ratio B/A = [0.005, 0.005] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+          "target": {
+            "label": "SUPPORTED",
+            "effect": {
+              "query": "orders_by_customer",
+              "ratio": 0.005095055210370959,
+              "ci_low": 0.004749832180819951,
+              "ci_high": 0.005481529421617748,
+              "n_blocks": 15,
+              "change_pct": -99.49,
+              "confidence": 0.95,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 115065.975,
+              "median_us_b": 488.44000000000005,
+              "block_ratios": [
+                0.0048,
+                0.004,
+                0.0069,
+                0.006,
+                0.0047,
+                0.0041,
+                0.0045,
+                0.0045,
+                0.0053,
+                0.0051,
+                0.0053,
+                0.0052,
+                0.0062,
+                0.005,
+                0.0054
+              ]
+            },
+            "reason": "95% CI of time ratio B/A = [0.005, 0.005] lies entirely below 0.95 (>= 5% faster)"
+          },
+          "guardrail": {
+            "queries": [
+              {
+                "query": "latest_orders_for_customer",
+                "ratio": 0.0026783318807972797,
+                "ci_low": 0.002377259870794916,
+                "weight": 20,
+                "ci_high": 0.0029804072372585197,
+                "n_blocks": 15,
+                "change_pct": -99.73,
+                "confidence": 0.975,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 199490.44,
+                "median_us_b": 466.645,
+                "block_ratios": [
+                  0.0031,
+                  0.0029,
+                  0.0029,
+                  0.003,
+                  0.002,
+                  0.0022,
+                  0.0034,
+                  0.0029,
+                  0.0034,
+                  0.0031,
+                  0.0031,
+                  0.0026,
+                  0.0021,
+                  0.0017,
+                  0.0024
+                ],
+                "collateral_regression": false
+              },
+              {
+                "query": "touch_order",
+                "ratio": 1.0760171794524584,
+                "ci_low": 0.9699979108698715,
+                "weight": 20,
+                "ci_high": 1.2144148000425559,
+                "n_blocks": 15,
+                "change_pct": 7.6,
+                "confidence": 0.975,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 328.26,
+                "median_us_b": 384.62,
+                "block_ratios": [
+                  1.4858,
+                  1.0417,
+                  1.6568,
+                  0.8221,
+                  0.8841,
+                  0.981,
+                  1.1154,
+                  1.0654,
+                  1.0459,
+                  1.0477,
+                  1.3921,
+                  1.198,
+                  0.9415,
+                  0.849,
+                  0.9456
+                ],
+                "collateral_regression": false
+              }
+            ],
+            "collateral": [],
+            "weighted_change_pct": -99.53
+          }
+        }
+      ],
+      "incidents": [
+        {
+          "incident_id": 1,
+          "query": "orders_by_customer",
+          "id": 1,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON orders (customer_id) (awaiting human review)",
+          "ratio": 563.6933534145656,
+          "plan_changed": true,
+          "diagnoses": [
+            {
+              "rule": "selective_seq_scan",
+              "hypothesis": "Seq Scan on orders examined 2,000,001 rows to keep 225 (0.01%). An index on orders(customer_id) could let PostgreSQL read only matching rows."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 1,
+              "kind": "index",
+              "description": "CREATE INDEX ON orders (customer_id)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 6,
+                  "plans_changed_per_query": {
+                    "latest_orders_for_customer": 5
+                  }
+                },
+                "index_ddl": "CREATE INDEX cp_orders_customer_id_idx ON orders (customer_id)",
+                "affected_reads": [
+                  "latest_orders_for_customer"
+                ],
+                "used_by_target": true,
+                "writes_on_table": [
+                  "touch_order"
+                ],
+                "target_cost_after": 1541.8316666666667,
+                "target_cost_before": 34418.170000000006
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.005, 0.005] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "orders_by_customer",
+                  "ratio": 0.005095055210370959,
+                  "ci_low": 0.004749832180819951,
+                  "ci_high": 0.005481529421617748,
+                  "n_blocks": 15,
+                  "change_pct": -99.49,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 115065.975,
+                  "median_us_b": 488.44000000000005,
+                  "block_ratios": [
+                    0.0048,
+                    0.004,
+                    0.0069,
+                    0.006,
+                    0.0047,
+                    0.0041,
+                    0.0045,
+                    0.0045,
+                    0.0053,
+                    0.0051,
+                    0.0053,
+                    0.0052,
+                    0.0062,
+                    0.005,
+                    0.0054
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.005, 0.005] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [
+                  {
+                    "query": "latest_orders_for_customer",
+                    "ratio": 0.0026783318807972797,
+                    "ci_low": 0.002377259870794916,
+                    "weight": 20,
+                    "ci_high": 0.0029804072372585197,
+                    "n_blocks": 15,
+                    "change_pct": -99.73,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 199490.44,
+                    "median_us_b": 466.645,
+                    "block_ratios": [
+                      0.0031,
+                      0.0029,
+                      0.0029,
+                      0.003,
+                      0.002,
+                      0.0022,
+                      0.0034,
+                      0.0029,
+                      0.0034,
+                      0.0031,
+                      0.0031,
+                      0.0026,
+                      0.0021,
+                      0.0017,
+                      0.0024
+                    ],
+                    "collateral_regression": false
+                  },
+                  {
+                    "query": "touch_order",
+                    "ratio": 1.0760171794524584,
+                    "ci_low": 0.9699979108698715,
+                    "weight": 20,
+                    "ci_high": 1.2144148000425559,
+                    "n_blocks": 15,
+                    "change_pct": 7.6,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 328.26,
+                    "median_us_b": 384.62,
+                    "block_ratios": [
+                      1.4858,
+                      1.0417,
+                      1.6568,
+                      0.8221,
+                      0.8841,
+                      0.981,
+                      1.1154,
+                      1.0654,
+                      1.0459,
+                      1.0477,
+                      1.3921,
+                      1.198,
+                      0.9415,
+                      0.849,
+                      0.9456
+                    ],
+                    "collateral_regression": false
+                  }
+                ],
+                "collateral": [],
+                "weighted_change_pct": -99.53
+              }
+            }
+          ]
+        },
+        {
+          "incident_id": 2,
+          "query": "latest_orders_for_customer",
+          "id": 2,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON orders (customer_id, created_at) (awaiting human review)",
+          "ratio": 789.850920622087,
+          "plan_changed": true,
+          "diagnoses": [
+            {
+              "rule": "ordered_index_walk",
+              "hypothesis": "Index Scan on orders_created_at_idx walked 1,962,540 rows and filtered out almost all of them. The planner likely assumed matching rows are spread evenly; a composite index orders(customer_id, created_at) would find them directly."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 2,
+              "kind": "index",
+              "description": "CREATE INDEX ON orders (customer_id, created_at)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 6,
+                  "plans_changed_per_query": {
+                    "orders_by_customer": 6
+                  }
+                },
+                "index_ddl": "CREATE INDEX cp_orders_customer_id_created_at_idx ON orders (customer_id, created_at)",
+                "affected_reads": [
+                  "orders_by_customer"
+                ],
+                "used_by_target": true,
+                "writes_on_table": [
+                  "touch_order"
+                ],
+                "target_cost_after": 40.656666666666666,
+                "target_cost_before": 13838.643333333333
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "latest_orders_for_customer",
+                  "ratio": 0.002613365581065686,
+                  "ci_low": 0.0023814007247775566,
+                  "ci_high": 0.002854397295433153,
+                  "n_blocks": 15,
+                  "change_pct": -99.74,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 169407.47999999998,
+                  "median_us_b": 383.03999999999996,
+                  "block_ratios": [
+                    0.0024,
+                    0.002,
+                    0.0023,
+                    0.0019,
+                    0.0032,
+                    0.0027,
+                    0.0028,
+                    0.0023,
+                    0.0031,
+                    0.0021,
+                    0.003,
+                    0.0028,
+                    0.0033,
+                    0.0032,
+                    0.0028
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [
+                  {
+                    "query": "orders_by_customer",
+                    "ratio": 0.006045976932585331,
+                    "ci_low": 0.005217010719198229,
+                    "weight": 30,
+                    "ci_high": 0.007053935544873502,
+                    "n_blocks": 15,
+                    "change_pct": -99.4,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 99231.8,
+                    "median_us_b": 457.645,
+                    "block_ratios": [
+                      0.0084,
+                      0.0062,
+                      0.0058,
+                      0.0045,
+                      0.0079,
+                      0.0087,
+                      0.0053,
+                      0.0058,
+                      0.007,
+                      0.0059,
+                      0.0053,
+                      0.0041,
+                      0.0094,
+                      0.004,
+                      0.0055
+                    ],
+                    "collateral_regression": false
+                  },
+                  {
+                    "query": "touch_order",
+                    "ratio": 0.971337485138646,
+                    "ci_low": 0.8372923222243349,
+                    "weight": 20,
+                    "ci_high": 1.1112391672201105,
+                    "n_blocks": 15,
+                    "change_pct": -2.87,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 291.52,
+                    "median_us_b": 295.06,
+                    "block_ratios": [
+                      1.063,
+                      1.0665,
+                      1.2228,
+                      1.5074,
+                      0.9707,
+                      0.9894,
+                      1.1239,
+                      0.9497,
+                      0.9521,
+                      0.5562,
+                      0.8331,
+                      1.1438,
+                      1.1489,
+                      0.8798,
+                      0.5917
+                    ],
+                    "collateral_regression": false
+                  }
+                ],
+                "collateral": [],
+                "weighted_change_pct": -99.49
+              }
+            }
+          ]
+        }
+      ],
+      "seconds": 313.0
+    },
+    {
+      "scenario": "s2_stale_statistics",
+      "title": "Bulk load without ANALYZE",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {},
+      "expected_query": "segment_revenue_for_status",
+      "detected": false,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": false,
+      "candidates": [],
+      "incidents": [],
+      "seconds": 64.5
+    },
+    {
+      "scenario": "s3_work_mem_lowered",
+      "title": "work_mem lowered from 64MB to 4MB",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {},
+      "expected_query": "monthly_revenue_top_customers",
+      "detected": false,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": false,
+      "candidates": [],
+      "incidents": [],
+      "seconds": 54.5
+    },
+    {
+      "scenario": "s4_updated_at_index_dropped",
+      "title": "Index on orders.updated_at dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {
+        "recently_updated_orders": 2
+      },
+      "expected_query": "recently_updated_orders",
+      "detected": true,
+      "detection_delay_rounds": 2,
+      "diagnosis_rules": [
+        "selective_seq_scan"
+      ],
+      "diagnosis_correct": true,
+      "candidates": [
+        {
+          "id": 3,
+          "kind": "index",
+          "description": "CREATE INDEX ON orders (updated_at)",
+          "status": "tested",
+          "hypopg": {
+            "details": {
+              "params_checked": 6,
+              "plans_changed_per_query": {}
+            },
+            "index_ddl": "CREATE INDEX cp_orders_updated_at_idx ON orders (updated_at)",
+            "affected_reads": [],
+            "used_by_target": true,
+            "writes_on_table": [
+              "touch_order"
+            ],
+            "target_cost_after": 4.89,
+            "target_cost_before": 34414.723333333335
+          },
+          "label": "SUPPORTED",
+          "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+          "target": {
+            "label": "SUPPORTED",
+            "effect": {
+              "query": "recently_updated_orders",
+              "ratio": 0.003892042451087064,
+              "ci_low": 0.003423210238540937,
+              "ci_high": 0.0044274796966927606,
+              "n_blocks": 15,
+              "change_pct": -99.61,
+              "confidence": 0.95,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 123155.92,
+              "median_us_b": 474.19500000000005,
+              "block_ratios": [
+                0.0041,
+                0.0041,
+                0.0062,
+                0.0058,
+                0.0043,
+                0.0035,
+                0.0039,
+                0.0024,
+                0.0029,
+                0.0028,
+                0.0047,
+                0.0038,
+                0.0039,
+                0.0032,
+                0.0046
+              ]
+            },
+            "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+          },
+          "guardrail": {
+            "queries": [
+              {
+                "query": "touch_order",
+                "ratio": 1.1305775586448925,
+                "ci_low": 1.0925184998319266,
+                "weight": 20,
+                "ci_high": 1.1700073656668297,
+                "n_blocks": 15,
+                "change_pct": 13.06,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 406.935,
+                "median_us_b": 457.515,
+                "block_ratios": [
+                  1.0821,
+                  1.2029,
+                  1.2673,
+                  1.048,
+                  1.1298,
+                  1.0443,
+                  1.0215,
+                  1.1339,
+                  1.1919,
+                  1.1414,
+                  1.0825,
+                  1.1884,
+                  1.166,
+                  1.2583,
+                  1.0388
+                ],
+                "collateral_regression": false
+              }
+            ],
+            "collateral": [],
+            "weighted_change_pct": -96.01
+          }
+        }
+      ],
+      "incidents": [
+        {
+          "incident_id": 3,
+          "query": "recently_updated_orders",
+          "id": 3,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON orders (updated_at) (awaiting human review)",
+          "ratio": 2275.544595913697,
+          "plan_changed": true,
+          "diagnoses": [
+            {
+              "rule": "selective_seq_scan",
+              "hypothesis": "Seq Scan on orders examined 1,999,998 rows to keep 2,658 (0.13%). An index on orders(updated_at) could let PostgreSQL read only matching rows."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 3,
+              "kind": "index",
+              "description": "CREATE INDEX ON orders (updated_at)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 6,
+                  "plans_changed_per_query": {}
+                },
+                "index_ddl": "CREATE INDEX cp_orders_updated_at_idx ON orders (updated_at)",
+                "affected_reads": [],
+                "used_by_target": true,
+                "writes_on_table": [
+                  "touch_order"
+                ],
+                "target_cost_after": 4.89,
+                "target_cost_before": 34414.723333333335
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "recently_updated_orders",
+                  "ratio": 0.003892042451087064,
+                  "ci_low": 0.003423210238540937,
+                  "ci_high": 0.0044274796966927606,
+                  "n_blocks": 15,
+                  "change_pct": -99.61,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 123155.92,
+                  "median_us_b": 474.19500000000005,
+                  "block_ratios": [
+                    0.0041,
+                    0.0041,
+                    0.0062,
+                    0.0058,
+                    0.0043,
+                    0.0035,
+                    0.0039,
+                    0.0024,
+                    0.0029,
+                    0.0028,
+                    0.0047,
+                    0.0038,
+                    0.0039,
+                    0.0032,
+                    0.0046
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [
+                  {
+                    "query": "touch_order",
+                    "ratio": 1.1305775586448925,
+                    "ci_low": 1.0925184998319266,
+                    "weight": 20,
+                    "ci_high": 1.1700073656668297,
+                    "n_blocks": 15,
+                    "change_pct": 13.06,
+                    "confidence": 0.95,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 406.935,
+                    "median_us_b": 457.515,
+                    "block_ratios": [
+                      1.0821,
+                      1.2029,
+                      1.2673,
+                      1.048,
+                      1.1298,
+                      1.0443,
+                      1.0215,
+                      1.1339,
+                      1.1919,
+                      1.1414,
+                      1.0825,
+                      1.1884,
+                      1.166,
+                      1.2583,
+                      1.0388
+                    ],
+                    "collateral_regression": false
+                  }
+                ],
+                "collateral": [],
+                "weighted_change_pct": -96.01
+              }
+            }
+          ]
+        }
+      ],
+      "seconds": 126.2
+    },
+    {
+      "scenario": "s5_created_at_index_dropped",
+      "title": "Index on orders.created_at dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [
+        "recently_updated_orders"
+      ],
+      "flagged_after_fault": {
+        "recent_orders_feed": 2
+      },
+      "expected_query": "recent_orders_feed",
+      "detected": true,
+      "detection_delay_rounds": 2,
+      "diagnosis_rules": [
+        "selective_seq_scan"
+      ],
+      "diagnosis_correct": true,
+      "candidates": [
+        {
+          "id": 4,
+          "kind": "index",
+          "description": "CREATE INDEX ON orders (created_at)",
+          "status": "tested",
+          "hypopg": {
+            "details": {
+              "params_checked": 6,
+              "plans_changed_per_query": {
+                "latest_orders_for_customer": 1
+              }
+            },
+            "index_ddl": "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)",
+            "affected_reads": [
+              "latest_orders_for_customer"
+            ],
+            "used_by_target": true,
+            "writes_on_table": [
+              "touch_order"
+            ],
+            "target_cost_after": 2.401666666666667,
+            "target_cost_before": 34435.56166666667
+          },
+          "label": "SUPPORTED",
+          "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+          "target": {
+            "label": "SUPPORTED",
+            "effect": {
+              "query": "recent_orders_feed",
+              "ratio": 0.003291786678201325,
+              "ci_low": 0.002897333808979601,
+              "ci_high": 0.0037517423267304432,
+              "n_blocks": 15,
+              "change_pct": -99.67,
+              "confidence": 0.95,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 122223.41500000001,
+              "median_us_b": 395.365,
+              "block_ratios": [
+                0.0031,
+                0.0021,
+                0.0025,
+                0.0031,
+                0.0053,
+                0.005,
+                0.004,
+                0.0033,
+                0.0038,
+                0.0043,
+                0.0028,
+                0.0025,
+                0.0031,
+                0.0027,
+                0.0034
+              ]
+            },
+            "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+          },
+          "guardrail": {
+            "queries": [
+              {
+                "query": "latest_orders_for_customer",
+                "ratio": 0.910415841170977,
+                "ci_low": 0.79623573087694,
+                "weight": 20,
+                "ci_high": 1.0066180490550842,
+                "n_blocks": 15,
+                "change_pct": -8.96,
+                "confidence": 0.975,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 453.18,
+                "median_us_b": 413.15,
+                "block_ratios": [
+                  0.8321,
+                  0.8981,
+                  1.0274,
+                  0.9183,
+                  0.893,
+                  0.4773,
+                  0.9783,
+                  1.1797,
+                  1.1606,
+                  0.9526,
+                  0.7879,
+                  0.8947,
+                  1.0383,
+                  0.951,
+                  0.9165
+                ],
+                "collateral_regression": false
+              },
+              {
+                "query": "touch_order",
+                "ratio": 1.055496417726832,
+                "ci_low": 0.9464567342088193,
+                "weight": 20,
+                "ci_high": 1.2090119275534417,
+                "n_blocks": 15,
+                "change_pct": 5.55,
+                "confidence": 0.975,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 303.865,
+                "median_us_b": 315.63,
+                "block_ratios": [
+                  0.9906,
+                  0.9964,
+                  1.1759,
+                  0.8238,
+                  1.9862,
+                  1.0853,
+                  1.1604,
+                  0.9318,
+                  1.0777,
+                  0.8301,
+                  0.7701,
+                  1.1864,
+                  1.1107,
+                  1.0195,
+                  1.0903
+                ],
+                "collateral_regression": false
+              }
+            ],
+            "collateral": [],
+            "weighted_change_pct": -97.34
+          }
+        }
+      ],
+      "incidents": [
+        {
+          "incident_id": 5,
+          "query": "recent_orders_feed",
+          "id": 5,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON orders (created_at) (awaiting human review)",
+          "ratio": 4921.173006662373,
+          "plan_changed": null,
+          "diagnoses": [
+            {
+              "rule": "selective_seq_scan",
+              "hypothesis": "Seq Scan on orders examined 2,000,001 rows to keep 9,102 (0.46%). An index on orders(created_at) could let PostgreSQL read only matching rows."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 4,
+              "kind": "index",
+              "description": "CREATE INDEX ON orders (created_at)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 6,
+                  "plans_changed_per_query": {
+                    "latest_orders_for_customer": 1
+                  }
+                },
+                "index_ddl": "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)",
+                "affected_reads": [
+                  "latest_orders_for_customer"
+                ],
+                "used_by_target": true,
+                "writes_on_table": [
+                  "touch_order"
+                ],
+                "target_cost_after": 2.401666666666667,
+                "target_cost_before": 34435.56166666667
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster); no collateral regression across 2 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "recent_orders_feed",
+                  "ratio": 0.003291786678201325,
+                  "ci_low": 0.002897333808979601,
+                  "ci_high": 0.0037517423267304432,
+                  "n_blocks": 15,
+                  "change_pct": -99.67,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 122223.41500000001,
+                  "median_us_b": 395.365,
+                  "block_ratios": [
+                    0.0031,
+                    0.0021,
+                    0.0025,
+                    0.0031,
+                    0.0053,
+                    0.005,
+                    0.004,
+                    0.0033,
+                    0.0038,
+                    0.0043,
+                    0.0028,
+                    0.0025,
+                    0.0031,
+                    0.0027,
+                    0.0034
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [
+                  {
+                    "query": "latest_orders_for_customer",
+                    "ratio": 0.910415841170977,
+                    "ci_low": 0.79623573087694,
+                    "weight": 20,
+                    "ci_high": 1.0066180490550842,
+                    "n_blocks": 15,
+                    "change_pct": -8.96,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 453.18,
+                    "median_us_b": 413.15,
+                    "block_ratios": [
+                      0.8321,
+                      0.8981,
+                      1.0274,
+                      0.9183,
+                      0.893,
+                      0.4773,
+                      0.9783,
+                      1.1797,
+                      1.1606,
+                      0.9526,
+                      0.7879,
+                      0.8947,
+                      1.0383,
+                      0.951,
+                      0.9165
+                    ],
+                    "collateral_regression": false
+                  },
+                  {
+                    "query": "touch_order",
+                    "ratio": 1.055496417726832,
+                    "ci_low": 0.9464567342088193,
+                    "weight": 20,
+                    "ci_high": 1.2090119275534417,
+                    "n_blocks": 15,
+                    "change_pct": 5.55,
+                    "confidence": 0.975,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 303.865,
+                    "median_us_b": 315.63,
+                    "block_ratios": [
+                      0.9906,
+                      0.9964,
+                      1.1759,
+                      0.8238,
+                      1.9862,
+                      1.0853,
+                      1.1604,
+                      0.9318,
+                      1.0777,
+                      0.8301,
+                      0.7701,
+                      1.1864,
+                      1.1107,
+                      1.0195,
+                      1.0903
+                    ],
+                    "collateral_regression": false
+                  }
+                ],
+                "collateral": [],
+                "weighted_change_pct": -97.34
+              }
+            }
+          ]
+        },
+        {
+          "incident_id": 4,
+          "query": "recently_updated_orders",
+          "id": 4,
+          "status": "no_action",
+          "outcome": "no testable candidate",
+          "ratio": 2275.544595913697,
+          "plan_changed": false,
+          "diagnoses": [
+            {
+              "rule": "estimation_limit",
+              "hypothesis": "Large row-count misestimate on orders (q-error 28.0) although statistics look fresh: likely correlated columns or an expression the planner cannot estimate."
+            }
+          ],
+          "candidates": []
+        }
+      ],
+      "seconds": 126.3
+    },
+    {
+      "scenario": "s6_noisy_neighbor",
+      "title": "CPU/IO contention from another tenant",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [
+        "recent_orders_feed",
+        "recently_updated_orders"
+      ],
+      "flagged_after_fault": {
+        "monthly_revenue_top_customers": 2
+      },
+      "expected_query": null,
+      "detected": null,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": null,
+      "candidates": [],
+      "incidents": [
+        {
+          "incident_id": 6,
+          "query": "recently_updated_orders",
+          "id": 6,
+          "status": "no_action",
+          "outcome": "no testable candidate",
+          "ratio": 2275.544595913697,
+          "plan_changed": false,
+          "diagnoses": [
+            {
+              "rule": "estimation_limit",
+              "hypothesis": "Large row-count misestimate on orders (q-error 27.9) although statistics look fresh: likely correlated columns or an expression the planner cannot estimate."
+            }
+          ],
+          "candidates": []
+        },
+        {
+          "incident_id": 7,
+          "query": "monthly_revenue_top_customers",
+          "id": 7,
+          "status": "no_action",
+          "outcome": "no candidate supported (REJECTED)",
+          "ratio": 4.329489677642307,
+          "plan_changed": null,
+          "diagnoses": [
+            {
+              "rule": "work_mem_spill",
+              "hypothesis": "Aggregate spilled to disk (batches=5, disk=3,464 kB) with work_mem=64MB. More memory for this query may avoid the spill."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 5,
+              "kind": "setting",
+              "description": "SET work_mem = '256MB' for this query's session",
+              "status": "tested",
+              "hypopg": null,
+              "label": "REJECTED",
+              "reason": "95% CI of time ratio B/A = [0.999, 1.122] lies entirely above 0.95: no meaningful improvement",
+              "target": {
+                "label": "REJECTED",
+                "effect": {
+                  "query": "monthly_revenue_top_customers",
+                  "ratio": 1.0617210656154858,
+                  "ci_low": 0.9994495287651664,
+                  "ci_high": 1.1223481206481676,
+                  "n_blocks": 15,
+                  "change_pct": 6.17,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 1767207.1,
+                  "median_us_b": 1917577.35,
+                  "block_ratios": [
+                    0.8457,
+                    1.1483,
+                    0.9798,
+                    1.0364,
+                    1.0622,
+                    1.0776,
+                    0.9523,
+                    1.1391,
+                    0.8462,
+                    1.1438,
+                    1.0562,
+                    1.0747,
+                    1.2103,
+                    1.2033,
+                    1.2533
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.999, 1.122] lies entirely above 0.95: no meaningful improvement"
+              },
+              "guardrail": {
+                "queries": [],
+                "collateral": [],
+                "weighted_change_pct": 6.17
+              }
+            }
+          ]
+        }
+      ],
+      "seconds": 179.7
+    }
+  ]
+}

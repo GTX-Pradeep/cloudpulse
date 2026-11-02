@@ -1049,5 +1049,110 @@
       }
     ],
     "seconds": 126.3
+  },
+  {
+    "scenario": "s6_noisy_neighbor",
+    "title": "CPU/IO contention from another tenant",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [
+      "recent_orders_feed",
+      "recently_updated_orders"
+    ],
+    "flagged_after_fault": {
+      "monthly_revenue_top_customers": 2
+    },
+    "expected_query": null,
+    "detected": null,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": null,
+    "candidates": [],
+    "incidents": [
+      {
+        "incident_id": 6,
+        "query": "recently_updated_orders",
+        "id": 6,
+        "status": "no_action",
+        "outcome": "no testable candidate",
+        "ratio": 2275.544595913697,
+        "plan_changed": false,
+        "diagnoses": [
+          {
+            "rule": "estimation_limit",
+            "hypothesis": "Large row-count misestimate on orders (q-error 27.9) although statistics look fresh: likely correlated columns or an expression the planner cannot estimate."
+          }
+        ],
+        "candidates": []
+      },
+      {
+        "incident_id": 7,
+        "query": "monthly_revenue_top_customers",
+        "id": 7,
+        "status": "no_action",
+        "outcome": "no candidate supported (REJECTED)",
+        "ratio": 4.329489677642307,
+        "plan_changed": null,
+        "diagnoses": [
+          {
+            "rule": "work_mem_spill",
+            "hypothesis": "Aggregate spilled to disk (batches=5, disk=3,464 kB) with work_mem=64MB. More memory for this query may avoid the spill."
+          }
+        ],
+        "candidates": [
+          {
+            "id": 5,
+            "kind": "setting",
+            "description": "SET work_mem = '256MB' for this query's session",
+            "status": "tested",
+            "hypopg": null,
+            "label": "REJECTED",
+            "reason": "95% CI of time ratio B/A = [0.999, 1.122] lies entirely above 0.95: no meaningful improvement",
+            "target": {
+              "label": "REJECTED",
+              "effect": {
+                "query": "monthly_revenue_top_customers",
+                "ratio": 1.0617210656154858,
+                "ci_low": 0.9994495287651664,
+                "ci_high": 1.1223481206481676,
+                "n_blocks": 15,
+                "change_pct": 6.17,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 1767207.1,
+                "median_us_b": 1917577.35,
+                "block_ratios": [
+                  0.8457,
+                  1.1483,
+                  0.9798,
+                  1.0364,
+                  1.0622,
+                  1.0776,
+                  0.9523,
+                  1.1391,
+                  0.8462,
+                  1.1438,
+                  1.0562,
+                  1.0747,
+                  1.2103,
+                  1.2033,
+                  1.2533
+                ]
+              },
+              "reason": "95% CI of time ratio B/A = [0.999, 1.122] lies entirely above 0.95: no meaningful improvement"
+            },
+            "guardrail": {
+              "queries": [],
+              "collateral": [],
+              "weighted_change_pct": 6.17
+            }
+          }
+        ]
+      }
+    ],
+    "seconds": 179.7
   }
 ]
