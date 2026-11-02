@@ -1,0 +1,77 @@
+{
+  "label": "REJECTED",
+  "reason": "target improved (95% CI of time ratio B/A = [0.004, 0.005] lies entirely below 0.95 (>= 5% faster)) but 1 tracked query regressed beyond +10%: worst is touch_order at 1.23x (adjusted CI [1.14, 1.31])",
+  "target": {
+    "label": "SUPPORTED",
+    "reason": "95% CI of time ratio B/A = [0.004, 0.005] lies entirely below 0.95 (>= 5% faster)",
+    "effect": {
+      "query": "recently_updated_orders",
+      "n_blocks": 15,
+      "ratio": 0.004159543737872578,
+      "ci_low": 0.003741877141577181,
+      "ci_high": 0.004597065852497991,
+      "confidence": 0.95,
+      "median_us_a": 127275.42,
+      "median_us_b": 540.1949999999999,
+      "block_ratios": [
+        0.006,
+        0.0039,
+        0.0041,
+        0.0043,
+        0.0034,
+        0.0043,
+        0.0044,
+        0.0046,
+        0.0042,
+        0.0045,
+        0.0054,
+        0.005,
+        0.0031,
+        0.0025,
+        0.0038
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -99.58
+    }
+  },
+  "guardrail": [
+    {
+      "query": "touch_order",
+      "n_blocks": 15,
+      "ratio": 1.230149566690868,
+      "ci_low": 1.1445196650158795,
+      "ci_high": 1.307807978258581,
+      "confidence": 0.95,
+      "median_us_a": 311.09000000000003,
+      "median_us_b": 376.08000000000004,
+      "block_ratios": [
+        1.2896,
+        1.4327,
+        1.4169,
+        1.2204,
+        1.4116,
+        1.0463,
+        1.3609,
+        0.8448,
+        1.2504,
+        1.3451,
+        1.1646,
+        1.3173,
+        1.167,
+        1.1823,
+        1.1573
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": 23.01,
+      "weight": 20,
+      "collateral_regression": true
+    }
+  ],
+  "collateral": [
+    "touch_order"
+  ],
+  "weighted_change_pct": -96.66,
+  "warnings": []
+}
