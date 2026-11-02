@@ -1,0 +1,264 @@
+{
+  "spec": {
+    "name": "cand3_recently_updated_orders",
+    "description": "CREATE INDEX ON orders (updated_at)",
+    "scale": "default",
+    "seed": 42,
+    "baseline_sql": [
+      "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+      "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+      "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+      "ANALYZE orders",
+      "DROP INDEX orders_updated_at_idx"
+    ],
+    "queries": [
+      {
+        "name": "recently_updated_orders",
+        "sql": "SELECT id, status, updated_at FROM orders WHERE updated_at > %s ORDER BY updated_at DESC LIMIT 100",
+        "kind": "read",
+        "params": {
+          "type": "hours_before_end",
+          "n": 20,
+          "max_hours": 24
+        },
+        "weight": 2,
+        "compare_results": false
+      },
+      {
+        "name": "touch_order",
+        "sql": "UPDATE orders SET updated_at = updated_at + interval '1 second' WHERE id = %s",
+        "kind": "write",
+        "params": {
+          "type": "order_ids",
+          "n": 20
+        },
+        "weight": 20,
+        "compare_results": true
+      }
+    ],
+    "arm_a": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "arm_b": {
+      "name": "B",
+      "setup_sql": [
+        "CREATE INDEX cp_orders_updated_at_idx ON orders (updated_at)"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "protocol": {
+      "blocks": 15,
+      "warmup_rounds": 1,
+      "seed": 4242,
+      "statement_timeout_ms": 60000,
+      "lab_session": {
+        "synchronous_commit": "off"
+      }
+    },
+    "target_query": "recently_updated_orders"
+  },
+  "environment": {
+    "captured_at_utc": "2026-11-02T18:49:50+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "2e9a6bf",
+    "host": {
+      "os": "Linux 6.18.44-fc-v185",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "hypopg": "1.4.0",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "base_database": "cp_base_7b4754f51de3",
+  "base_fingerprint": {
+    "customers": 100000,
+    "customers_hash": "279244885607021745094",
+    "orders": 2000000,
+    "orders_hash": "-358039015515228316005"
+  },
+  "arms": {
+    "A": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.005,
+      "index_bytes": 108281856,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx"
+      ]
+    },
+    "B": {
+      "name": "B",
+      "setup_sql": [
+        "CREATE INDEX cp_orders_updated_at_idx ON orders (updated_at)"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 1.035,
+      "index_bytes": 153231360,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "cp_orders_updated_at_idx"
+      ]
+    }
+  },
+  "params": {
+    "recently_updated_orders": [
+      [
+        "2025-12-31 05:00:29.577849+00:00"
+      ],
+      [
+        "2025-12-31 07:33:20.900437+00:00"
+      ],
+      [
+        "2025-12-31 17:32:24.861193+00:00"
+      ],
+      [
+        "2025-12-31 18:52:20.602156+00:00"
+      ],
+      [
+        "2025-12-31 15:01:39.560487+00:00"
+      ],
+      [
+        "2025-12-31 19:30:05.292855+00:00"
+      ],
+      [
+        "2025-12-31 15:50:13.635518+00:00"
+      ],
+      [
+        "2025-12-31 17:30:10.260163+00:00"
+      ],
+      [
+        "2025-12-31 10:29:53.455118+00:00"
+      ],
+      [
+        "2025-12-31 01:53:33.735117+00:00"
+      ],
+      [
+        "2025-12-31 12:46:54.880917+00:00"
+      ],
+      [
+        "2025-12-31 05:30:48.477670+00:00"
+      ],
+      [
+        "2025-12-31 09:46:06.752484+00:00"
+      ],
+      [
+        "2025-12-31 11:13:35.994866+00:00"
+      ],
+      [
+        "2025-12-31 07:53:07.129988+00:00"
+      ],
+      [
+        "2025-12-31 01:13:30.752652+00:00"
+      ],
+      [
+        "2025-12-31 01:56:52.854410+00:00"
+      ],
+      [
+        "2025-12-31 06:26:04.569903+00:00"
+      ],
+      [
+        "2025-12-31 20:10:35.929330+00:00"
+      ],
+      [
+        "2025-12-31 02:05:06.529239+00:00"
+      ]
+    ],
+    "touch_order": [
+      [
+        "618662"
+      ],
+      [
+        "1091909"
+      ],
+      [
+        "688982"
+      ],
+      [
+        "1563305"
+      ],
+      [
+        "527981"
+      ],
+      [
+        "206635"
+      ],
+      [
+        "593898"
+      ],
+      [
+        "1031883"
+      ],
+      [
+        "1232621"
+      ],
+      [
+        "1209242"
+      ],
+      [
+        "1614294"
+      ],
+      [
+        "763238"
+      ],
+      [
+        "731116"
+      ],
+      [
+        "1033291"
+      ],
+      [
+        "1663223"
+      ],
+      [
+        "1230103"
+      ],
+      [
+        "433035"
+      ],
+      [
+        "922066"
+      ],
+      [
+        "1947264"
+      ],
+      [
+        "1138538"
+      ]
+    ]
+  }
+}
