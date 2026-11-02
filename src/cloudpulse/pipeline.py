@@ -232,7 +232,9 @@ def investigate(settings: Settings, incident_id: int, lab_state: LabState, log=p
                 if base_db is None:
                     base_db = harness.ensure_base(lab, lab_state.scale, lab_state.seed, lab_state.sql)
                 bdsn = db.with_database(lab, base_db)
+                # random sample + heavy hitters: plan flips concentrate on heavy values (F-9)
                 wl_params = {w.name: paramsmod.sample(w.params, bdsn, 5)[:hypo.MAX_PARAMS]
+                             + paramsmod.heavy_hitters(w.params, bdsn)
                              for w in WORKLOAD if w.kind == "read"}
                 res = hypo.what_if(bdsn, c.setup_sql[0], c.table, q,
                                    paramsmod.sample(q.params, bdsn, 5), WORKLOAD, wl_params)

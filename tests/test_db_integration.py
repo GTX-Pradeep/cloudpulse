@@ -180,3 +180,12 @@ def test_tracked_queries_belong_to_current_target_only(test_settings):
         "VALUES (2, %s, 10, 'x', 'customer_profile') RETURNING id", (cur_dbid,))[0]
     pks = pipeline.tracked_query_pks(s)
     assert pks["customer_profile"] == new and old not in pks.values()
+
+
+def test_heavy_hitters_are_the_most_frequent_customers(test_settings):
+    from cloudpulse.bench import params as pm
+    hh = pm.heavy_hitters({"type": "customer_mix"}, test_settings.target_dsn, k=5)
+    with db.cursor(test_settings.target_dsn) as cur:
+        cur.execute("SELECT customer_id FROM orders GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 5")
+        assert hh == [(r[0],) for r in cur.fetchall()]
+    assert pm.heavy_hitters({"type": "order_ids"}, test_settings.target_dsn) == []

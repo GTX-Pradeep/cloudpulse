@@ -20,7 +20,7 @@ from cloudpulse import db
 from cloudpulse.bench.spec import QuerySpec
 from cloudpulse.plans import tree
 
-MAX_PARAMS = 40  # EXPLAIN without ANALYZE is cheap; check the whole workload sample
+MAX_PARAMS = 60  # EXPLAIN without ANALYZE is cheap: workload sample + heavy hitters
 MAX_CHANGED_PARAMS = 10
 
 

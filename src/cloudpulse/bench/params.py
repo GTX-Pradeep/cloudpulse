@@ -49,6 +49,23 @@ def customer_mix(dsn: str, n: int, seed: int) -> Params:
     return [(int(x),) for x in pick]
 
 
+def heavy_hitters(spec: dict[str, Any], dsn: str, k: int = 20) -> Params:
+    """The k heaviest parameter values for a sampler (F-9).
+
+    Plan flips concentrate on the most frequent values, which the planner treats
+    specially (most-common-values statistics) and which a random sample rarely
+    contains. What-if checks always include them. Empty for samplers without a
+    notion of "heavy"."""
+    if spec.get("type") != "customer_mix":
+        return []
+    with db.cursor(dsn) as cur:
+        cur.execute(
+            "SELECT customer_id FROM orders GROUP BY customer_id "
+            "ORDER BY count(*) DESC, customer_id LIMIT %s", (k,)
+        )
+        return [(int(r[0]),) for r in cur.fetchall()]
+
+
 def order_ids(dsn: str, n: int, seed: int) -> Params:
     with db.cursor(dsn) as cur:
         cur.execute("SELECT min(id), max(id) FROM orders")

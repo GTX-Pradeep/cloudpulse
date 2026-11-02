@@ -288,3 +288,19 @@ action", so no verdict was wrong, but the detection bookkeeping was.
 - **Lesson:** an identifier that is unique only within a scope (here
   `queryid` per database) needs that scope in every lookup, and the test suite
   needs a case with two scopes.
+
+### F-9 · A random parameter sample never contains the customers who suffer
+After the F-7 fix, the corrected run still returned S5 = SUPPORTED. The plan-changing
+value HypoPG found in its random 40-customer sample (customer 23) was
+benchmarked, and for that customer the new plan was actually **faster**
+(4.3 ms → 0.8 ms). The customers who really suffer, heavy customers whose
+orders are all old (e.g. customer 7: about 15 ms → 166 ms in manual probing), were
+in neither sample.
+- **Why:** the planner treats the most frequent values specially (most-common-values
+  statistics give them large row estimates), so plan flips concentrate there, but a
+  random sample of 40 out of ~100k customers almost never draws them.
+- **Fix:** the what-if check always adds the 20 heaviest parameter values
+  (`params.heavy_hitters`). On the S5 lab database, HypoPG then reports 21 plan
+  changes, including customers 1–9, and those are benchmarked by the guardrail.
+- **Lesson:** "test the workload" means testing the *parameter distribution's
+  tails*, not only its typical values. Both earlier S5 results are kept as recorded.
