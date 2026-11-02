@@ -16,11 +16,14 @@ _Last updated: 2026-11-03_
 | M8 UI + pgvector similarity | done | `api/templates/`, `similarity/` |
 | M9 Reproduce script, README, CI | done | `scripts/reproduce.sh`, `.github/workflows/ci.yml` |
 
-## Results so far
-- All committed numbers come from the **development cloud sandbox (PostgreSQL 16,
-  2 vCPU)** and are labelled `dev-cloud-sandbox (not official)`.
-- CI (GitHub Actions) runs the full test suite against the pinned PostgreSQL 17
-  image with HypoPG and pgvector.
+## Results so far (dev cloud sandbox, PostgreSQL 16, labelled "not official")
+- Corrected evaluation: `results/evaluation/20261102T185926Z`. Supplementary,
+  labelled runs: `…_supplementary-16-rounds` (S2) and `…_supplementary-after-F9` (S5).
+- Superseded first run kept for the record: `results/evaluation/20261102T184027Z` (see NOTE.md there).
+- A/A calibration: `results/calibration/20261102T185543Z`; similarity: `results/similarity/`.
+- Headline: S5's `created_at` index is REJECTED for a 5.66× collateral regression
+  (replicated by `experiments/ab_created_at_index_trap.json`: 5.21×).
+- CI (GitHub Actions) runs all tests on the pinned PostgreSQL 17 image.
 
 ## Next steps
 1. **Run `./scripts/reproduce.sh` on your own laptop** to produce official

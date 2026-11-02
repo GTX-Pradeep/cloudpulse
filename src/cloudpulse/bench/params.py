@@ -92,11 +92,19 @@ def sample(spec: dict[str, Any], dsn: str, seed: int) -> Params:
     if kind == "order_ids":
         return order_ids(dsn, n, seed)
     if kind == "union":
-        # a regular sample plus specific values that must be covered (e.g. the
-        # parameters for which HypoPG predicts a plan change)
+        # a regular sample plus values that must be covered: explicit ones (e.g.
+        # parameters for which HypoPG predicts a plan change) and/or other samplers
         base = sample(spec["base"], dsn, seed)
         extra = [tuple(v) for v in spec.get("extra", [])]
-        return base + [p for p in extra if p not in base]
+        for other in spec.get("also", []):
+            extra += sample(other, dsn, seed)
+        out = list(base)
+        for p in extra:
+            if p not in out:
+                out.append(p)
+        return out
+    if kind == "heavy_hitters":
+        return heavy_hitters(spec["of"], dsn, int(spec.get("k", 20)))
     if kind == "hours_before_end":
         return hours_before_end(dsn, n, seed, float(spec.get("max_hours", 48)))
     raise ValueError(f"unknown parameter sampler {kind!r}")

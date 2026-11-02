@@ -1,6 +1,6 @@
 {
   "name": "ab_created_at_index_trap",
-  "description": "The tempting index: orders(created_at) speeds up the recent-orders feed but the planner then walks it for 'latest orders of customer X'.",
+  "description": "The tempting index: orders(created_at) speeds up the recent-orders feed but the planner then walks it for 'latest orders of customer X'. The guardrail sample includes the 10 heaviest customers, where the plan flips (F-9).",
   "scale": "default",
   "seed": 42,
   "baseline_sql": [
@@ -26,8 +26,20 @@
       "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s ORDER BY created_at DESC LIMIT 10",
       "kind": "read",
       "params": {
-        "type": "customer_mix",
-        "n": 20
+        "type": "union",
+        "base": {
+          "type": "customer_mix",
+          "n": 20
+        },
+        "also": [
+          {
+            "type": "heavy_hitters",
+            "of": {
+              "type": "customer_mix"
+            },
+            "k": 10
+          }
+        ]
       },
       "weight": 20
     },

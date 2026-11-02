@@ -96,3 +96,10 @@ def test_guardrail_queries_include_plan_changing_params():
     assert g["latest_orders_for_customer"].params["type"] == "union"
     assert g["latest_orders_for_customer"].params["extra"] == [[23]]
     assert g["touch_order"].params["type"] == "order_ids"
+
+
+def test_union_sampler_combines_samplers():
+    from cloudpulse.bench import params as pm
+    spec = {"type": "union", "base": {"type": "values", "values": [[1]]},
+            "also": [{"type": "values", "values": [[1], [5]]}]}
+    assert pm.sample(spec, "unused", 0) == [(1,), (5,)]

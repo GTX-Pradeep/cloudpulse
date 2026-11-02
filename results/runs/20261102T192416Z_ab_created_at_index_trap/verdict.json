@@ -1,0 +1,109 @@
+{
+  "label": "REJECTED",
+  "reason": "target improved (95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)) but 1 tracked query regressed beyond +10%: worst is latest_orders_for_customer at 5.21x (adjusted CI [4.46, 6.15])",
+  "target": {
+    "label": "SUPPORTED",
+    "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)",
+    "effect": {
+      "query": "recent_orders_feed",
+      "n_blocks": 15,
+      "ratio": 0.0033554779722664778,
+      "ci_low": 0.0029567684429442726,
+      "ci_high": 0.0037836842616041475,
+      "confidence": 0.95,
+      "median_us_a": 135860.18,
+      "median_us_b": 461.23,
+      "block_ratios": [
+        0.0029,
+        0.0024,
+        0.005,
+        0.0034,
+        0.004,
+        0.0032,
+        0.003,
+        0.002,
+        0.0026,
+        0.0043,
+        0.0041,
+        0.0032,
+        0.0039,
+        0.0033,
+        0.0044
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -99.66
+    }
+  },
+  "guardrail": [
+    {
+      "query": "latest_orders_for_customer",
+      "n_blocks": 15,
+      "ratio": 5.2051075051705915,
+      "ci_low": 4.464348582983684,
+      "ci_high": 6.151560845152646,
+      "confidence": 0.975,
+      "median_us_a": 1074.855,
+      "median_us_b": 867.6800000000001,
+      "block_ratios": [
+        4.8486,
+        3.7249,
+        7.7121,
+        3.9883,
+        6.4803,
+        4.2956,
+        4.5573,
+        3.9613,
+        5.6486,
+        3.6836,
+        6.1659,
+        4.53,
+        7.8476,
+        5.0413,
+        8.6897
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": 420.51,
+      "weight": 20,
+      "collateral_regression": true
+    },
+    {
+      "query": "touch_order",
+      "n_blocks": 15,
+      "ratio": 1.0416499802847472,
+      "ci_low": 0.950052297613263,
+      "ci_high": 1.1950741229949324,
+      "confidence": 0.975,
+      "median_us_a": 406.77,
+      "median_us_b": 418.66499999999996,
+      "block_ratios": [
+        1.0326,
+        0.9785,
+        2.0646,
+        1.0745,
+        1.002,
+        1.0436,
+        1.04,
+        1.1361,
+        1.0158,
+        1.0539,
+        0.8244,
+        0.9506,
+        0.9475,
+        0.8117,
+        1.032
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": 4.16,
+      "weight": 20,
+      "collateral_regression": false
+    }
+  ],
+  "collateral": [
+    "latest_orders_for_customer"
+  ],
+  "weighted_change_pct": -82.7,
+  "warnings": []
+}
