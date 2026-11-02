@@ -55,7 +55,10 @@ def _mad(values: list[float], med: float) -> float:
     return statistics.median([abs(v - med) for v in values])
 
 
-def detect(series: list[dict], cfg: DetectorConfig = DetectorConfig()) -> Detection:
+DEFAULT_CONFIG = DetectorConfig()
+
+
+def detect(series: list[dict], cfg: DetectorConfig = DEFAULT_CONFIG) -> Detection:
     """series: dicts with keys mean_ms, calls, invalid (from query_intervals)."""
     valid: list[tuple[int, float]] = []
     flags: list[bool] = []

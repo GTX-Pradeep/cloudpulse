@@ -49,7 +49,7 @@ def template_queryids(target_dsn: str, templates: list[QuerySpec]) -> dict[int, 
     """
     out: dict[int, str] = {}
     with db.connect(target_dsn) as conn, conn.cursor() as cur:
-        for i, q in enumerate(templates):
+        for q in templates:
             p = paramsmod.sample({**q.params, "n": 1}, target_dsn, 0)[0]
             cur.execute("EXPLAIN (VERBOSE, FORMAT JSON) " + q.sql, p)
             plan = cur.fetchone()[0][0]

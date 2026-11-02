@@ -10,8 +10,8 @@ evaluation can show *why* each decision was made.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
-from typing import Callable
 
 import psycopg
 
@@ -75,11 +75,11 @@ def tracked_query_pks(settings: Settings) -> dict[str, int]:
 
 
 def detect_and_open_incidents(
-    settings: Settings, cfg: detector.DetectorConfig = detector.DetectorConfig(),
+    settings: Settings, cfg: detector.DetectorConfig = detector.DEFAULT_CONFIG,
     scenario: str | None = None,
 ) -> list[int]:
     opened = []
-    for name, qpk in tracked_query_pks(settings).items():
+    for qpk in tracked_query_pks(settings).values():
         series = collector.interval_series(settings.meta_dsn, qpk)
         det = detector.detect(series, cfg)
         if det.state != "regression":

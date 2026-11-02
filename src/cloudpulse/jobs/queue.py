@@ -12,8 +12,8 @@ becomes claimable again, until max_attempts is reached.
 
 from __future__ import annotations
 
-import socket
 import os
+import socket
 from typing import Any
 
 from cloudpulse.meta import store

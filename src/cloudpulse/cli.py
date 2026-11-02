@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import UTC
 from pathlib import Path
 
 from cloudpulse.config import load_settings
@@ -57,14 +58,14 @@ def cmd_evaluate(args) -> None:
 
 def cmd_similarity(args) -> None:
     import json as _json
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from cloudpulse.config import REPO_ROOT
     from cloudpulse.similarity import benchmark
     res = [benchmark.run(k) for k in (1, 2, 4)]
     out = REPO_ROOT / "results" / "similarity"
     out.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     (out / f"{stamp}_benchmark.json").write_text(_json.dumps(res, indent=2))
     print(_json.dumps(res, indent=2))
 

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Regression incidents</h1>
+<p class="muted">Each incident is a query that became slower than its own history. Every candidate fix
+was tested in the lab against an identical copy of the database before any verdict was given.</p>
+<div class="panel tablewrap">
+{% if incidents %}
+<table>
+<thead><tr><th>#</th><th>Query</th><th>Scenario</th><th class="num">Slowdown</th><th>Status</th><th>Verdicts</th><th>Outcome</th></tr></thead>
+<tbody>
+{% for i in incidents %}
+<tr>
+  <td><a href="/incidents/{{ i.id }}">{{ i.id }}</a></td>
+  <td><a href="/incidents/{{ i.id }}">{{ i.template_name or 'untracked' }}</a></td>
+  <td class="muted">{{ i.scenario or '' }}</td>
+  <td class="num">{{ '%.1f'|format(i.ratio) }}×</td>
+  <td>{{ i.status }}</td>
+  <td>{% for v in (i.verdicts or '').split(',') if v %}<span class="pill {{ v }}">{{ v }}</span> {% endfor %}</td>
+  <td class="muted">{{ i.outcome or '' }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="muted">No incidents yet. Run <code>cloudpulse evaluate</code> to replay the fault scenarios.</p>
+{% endif %}
+</div>
+{% endblock %}

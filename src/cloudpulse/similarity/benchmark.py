@@ -34,8 +34,10 @@ FAMILIES: dict[str, list[str]] = {
         "select x from events e where e.user_id = 3 order by e.ts desc limit 1",
     ],
     "join_aggregate": [
-        "SELECT c.segment, count(*) FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.segment",
-        "select p.category, sum(i.qty) from items i join products p on p.id = i.product_id group by p.category",
+        "SELECT c.segment, count(*) FROM orders o JOIN customers c ON c.id = o.customer_id "
+        "GROUP BY c.segment",
+        "select p.category, sum(i.qty) from items i join products p on p.id = i.product_id "
+        "group by p.category",
         "SELECT r.name, avg(s.amount) FROM sales s JOIN regions r ON r.id = s.region_id GROUP BY r.name",
         "SELECT t.team, max(m.score) FROM matches m JOIN teams t ON t.id = m.team_id GROUP BY t.team",
         "select d.name, count(*) from employees e join departments d on d.id = e.dept_id group by d.name",

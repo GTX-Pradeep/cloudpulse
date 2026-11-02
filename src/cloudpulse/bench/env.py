@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import platform
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import psycopg
 
@@ -79,7 +79,7 @@ def server_settings(dsn: str) -> dict:
 
 def capture(dsn: str, env_label: str) -> dict:
     return {
-        "captured_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "captured_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "env_label": env_label,
         "cloudpulse_version": __version__,
         "git_commit": git_commit(),

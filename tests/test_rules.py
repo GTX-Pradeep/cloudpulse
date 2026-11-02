@@ -70,4 +70,6 @@ def test_healthy_plan_gives_cause_unclear():
 
 def test_index_candidate_sql_is_well_formed():
     c = rules.index_candidate("orders", ["customer_id", "created_at"])
-    assert c.setup_sql == ["CREATE INDEX cp_orders_customer_id_created_at_idx ON orders (customer_id, created_at)"]
+    assert c.setup_sql == [
+        "CREATE INDEX cp_orders_customer_id_created_at_idx ON orders (customer_id, created_at)"
+    ]

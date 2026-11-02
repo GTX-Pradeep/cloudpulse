@@ -56,7 +56,7 @@ class ExperimentSpec:
     target_query: str | None = None  # name of the query the candidate is meant to fix
 
     @staticmethod
-    def from_dict(d: dict[str, Any]) -> "ExperimentSpec":
+    def from_dict(d: dict[str, Any]) -> ExperimentSpec:
         return ExperimentSpec(
             name=d["name"],
             description=d.get("description", ""),
@@ -71,5 +71,5 @@ class ExperimentSpec:
         )
 
     @staticmethod
-    def load(path: str | Path) -> "ExperimentSpec":
+    def load(path: str | Path) -> ExperimentSpec:
         return ExperimentSpec.from_dict(json.loads(Path(path).read_text()))

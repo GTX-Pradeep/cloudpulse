@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure environment
+        run: |
+          cp .env.example .env
+          echo "CP_ENV_LABEL=github-actions-ci" >> .env
+
+      - name: Start PostgreSQL servers (target, lab, meta)
+        run: docker compose up -d --build --wait
+
+      - name: Install CloudPulse
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Tests (unit, golden-file and integration)
+        run: pytest -q
+
+      - name: Similarity retrieval benchmark (sanity)
+        run: cloudpulse similarity-benchmark
+
+      - name: Server logs on failure
+        if: failure()
+        run: docker compose logs --tail=200

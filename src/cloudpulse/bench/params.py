@@ -8,7 +8,7 @@ both arms see exactly the same values in the same order within a block.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import numpy as np
@@ -20,7 +20,7 @@ Params = list[tuple]
 
 
 def _end() -> datetime:
-    return datetime.fromisoformat(EPOCH_END.replace("+00", "+00:00")).astimezone(timezone.utc)
+    return datetime.fromisoformat(EPOCH_END.replace("+00", "+00:00")).astimezone(UTC)
 
 
 def customer_mix(dsn: str, n: int, seed: int) -> Params:

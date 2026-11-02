@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 
 @dataclass
@@ -41,7 +42,7 @@ class PlanNode:
     shared_read: int | None
     temp_written: int | None
     raw: dict[str, Any] = field(repr=False)
-    children: list["PlanNode"] = field(default_factory=list)
+    children: list[PlanNode] = field(default_factory=list)
 
     # ---- derived -----------------------------------------------------------
 
@@ -94,7 +95,7 @@ class PlanNode:
             return True
         return bool(self.self_temp_written)
 
-    def walk(self) -> Iterator["PlanNode"]:
+    def walk(self) -> Iterator[PlanNode]:
         yield self
         for c in self.children:
             yield from c.walk()

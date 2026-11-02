@@ -27,7 +27,7 @@ import hashlib
 import json
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import psycopg
@@ -188,7 +188,7 @@ def block_permutation(n: int, seed: int, query_idx: int, block: int) -> list[int
 
 def new_run_dir(name: str, root: Path | None = None) -> Path:
     root = root or (REPO_ROOT / "results" / "runs")
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     d = root / f"{stamp}_{name}"
     d.mkdir(parents=True, exist_ok=False)
     return d
@@ -248,7 +248,7 @@ def _run_locked(spec, settings, lab, out_root, rebuild_base, log) -> RunResult:
                     }, default=str) + "\n")
             # warm-up (discarded) + result-equivalence check
             for w in range(proto.warmup_rounds):
-                for pi, p in enumerate(plist):
+                for p in plist:
                     out = {arm: execute_timed(conns[arm], q, p) for arm in ("A", "B")}
                     if w == 0 and q.kind == "read" and q.compare_results:
                         ha, hb = out["A"][3], out["B"][3]

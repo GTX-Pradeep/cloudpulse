@@ -1,0 +1,43 @@
+{
+  "name": "ab_customer_id_index",
+  "description": "Does an index on orders(customer_id) help the per-customer lookup, and does it hurt the update path?",
+  "scale": "default",
+  "seed": 42,
+  "baseline_sql": [
+    "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+    "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+    "ANALYZE orders"
+  ],
+  "target_query": "orders_by_customer",
+  "queries": [
+    {
+      "name": "orders_by_customer",
+      "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s",
+      "kind": "read",
+      "params": {
+        "type": "customer_mix",
+        "n": 20
+      },
+      "weight": 30
+    },
+    {
+      "name": "touch_order",
+      "sql": "UPDATE orders SET updated_at = updated_at + interval '1 second' WHERE id = %s",
+      "kind": "write",
+      "params": {
+        "type": "order_ids",
+        "n": 20
+      },
+      "weight": 20
+    }
+  ],
+  "arm_b": {
+    "setup_sql": [
+      "CREATE INDEX orders_customer_id_idx ON orders (customer_id)"
+    ]
+  },
+  "protocol": {
+    "blocks": 15,
+    "warmup_rounds": 1
+  }
+}

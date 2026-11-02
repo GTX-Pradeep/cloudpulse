@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from cloudpulse import db, pipeline
@@ -29,7 +29,11 @@ from cloudpulse.meta import store
 from cloudpulse.telemetry import collector, detector
 from cloudpulse.workload.generator import NoisyNeighbor, WorkloadRunner
 from cloudpulse.workload.suite import (
-    BASELINE_DB_SETTINGS, BASELINE_SQL, SCENARIOS, WORKLOAD, Scenario,
+    BASELINE_DB_SETTINGS,
+    BASELINE_SQL,
+    SCENARIOS,
+    WORKLOAD,
+    Scenario,
 )
 
 TEMPLATE_DB = "cp_target_template"
@@ -127,7 +131,7 @@ def run_scenario(
     pipeline.capture_baseline_plans(settings, pipeline.tracked_query_pks(settings))
 
     baseline_fp: set[str] = set()
-    for r in range(baseline_rounds):
+    for _ in range(baseline_rounds):
         runner.run_round()
         collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
         baseline_fp |= set(_flagged(settings, cfg))
@@ -136,7 +140,7 @@ def run_scenario(
     nn = inject(settings, sc)
     log(f"[{sc.name}] fault injected")
     try:
-        for r in range(fault_rounds):
+        for _ in range(fault_rounds):
             runner.run_round()
             collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
     finally:
@@ -198,7 +202,7 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
     store.init_schema(settings.meta_dsn, reset=True)
     build_target_template(settings, scale, seed, log=log)
     out_root = out_root or (REPO_ROOT / "results" / "evaluation")
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out = out_root / stamp
     out.mkdir(parents=True)
     results = []

@@ -1,0 +1,54 @@
+{
+  "name": "ab_created_at_index_trap",
+  "description": "The tempting index: orders(created_at) speeds up the recent-orders feed but the planner then walks it for 'latest orders of customer X'.",
+  "scale": "default",
+  "seed": 42,
+  "baseline_sql": [
+    "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+    "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+    "ANALYZE orders"
+  ],
+  "target_query": "recent_orders_feed",
+  "queries": [
+    {
+      "name": "recent_orders_feed",
+      "sql": "SELECT id, customer_id, amount FROM orders WHERE created_at > %s ORDER BY created_at DESC LIMIT 50",
+      "kind": "read",
+      "params": {
+        "type": "hours_before_end",
+        "n": 20,
+        "max_hours": 48
+      },
+      "weight": 5
+    },
+    {
+      "name": "latest_orders_for_customer",
+      "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s ORDER BY created_at DESC LIMIT 10",
+      "kind": "read",
+      "params": {
+        "type": "customer_mix",
+        "n": 20
+      },
+      "weight": 20
+    },
+    {
+      "name": "touch_order",
+      "sql": "UPDATE orders SET updated_at = updated_at + interval '1 second' WHERE id = %s",
+      "kind": "write",
+      "params": {
+        "type": "order_ids",
+        "n": 20
+      },
+      "weight": 20
+    }
+  ],
+  "arm_b": {
+    "setup_sql": [
+      "CREATE INDEX orders_created_at_idx ON orders (created_at)"
+    ]
+  },
+  "protocol": {
+    "blocks": 15,
+    "warmup_rounds": 1
+  }
+}

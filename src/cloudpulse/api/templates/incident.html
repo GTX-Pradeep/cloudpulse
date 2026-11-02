@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Incident {{ i.id }} · CloudPulse{% endblock %}
+{% block content %}
+<p><a href="/">← all incidents</a></p>
+<h1>Incident {{ i.id }}: <code>{{ i.template_name }}</code> became {{ '%.1f'|format(i.ratio) }}× slower</h1>
+<p class="muted">Detected {{ i.detected_at.strftime('%Y-%m-%d %H:%M:%S UTC') }} · {{ i.detector }}
+{% if i.scenario %} · scenario <code>{{ i.scenario }}</code>{% endif %} · status <b>{{ i.status }}</b>
+{% if i.outcome %} · {{ i.outcome }}{% endif %}</p>
+
+<section class="panel">
+<h2>1 · Regression evidence</h2>
+<div class="grid">
+  <div class="stat"><b>{{ i.baseline_median_ms|num }} ms</b><span>baseline median of interval means</span></div>
+  <div class="stat"><b>{{ i.current_ms|num }} ms</b><span>current (median of anomalous intervals)</span></div>
+  <div class="stat"><b>{{ '%.1f'|format(i.evidence.z or 0) }}</b><span>robust z-score (MAD)</span></div>
+  <div class="stat"><b>{{ {True:'yes', False:'no', None:'unknown'}[i.evidence.plan_changed_since_baseline] }}</b><span>plan shape changed since baseline</span></div>
+</div>
+{% set s = sparkline(i.evidence.series or []) %}
+{% if s.path %}
+<svg viewBox="0 0 {{ s.width }} {{ s.height }}" width="100%" role="img" aria-label="Mean latency per interval">
+  <path d="{{ s.path }}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  {% for idx in i.evidence.anomalous_points or [] %}{% if idx < s.points|length %}
+  <circle cx="{{ s.points[idx][0] }}" cy="{{ s.points[idx][1] }}" r="4" fill="var(--bad)"/>{% endif %}{% endfor %}
+  <text x="8" y="12">max {{ s.max|num }} ms</text><text x="8" y="{{ s.height - 1 }}">interval →</text>
+</svg>
+<p class="muted">Mean latency per telemetry interval (pg_stat_statements deltas). Red: intervals counted as anomalous.</p>
+{% endif %}
+<details><summary>Query text (as normalised by pg_stat_statements)</summary><pre>{{ i.query_text }}</pre></details>
+</section>
+
+<section class="panel tablewrap">
+<h2>2 · Captured plan (EXPLAIN ANALYZE on the target, slowest of several parameters)</h2>
+{% if i.plan %}
+<table>
+<thead><tr><th>Node</th><th class="num">Est. rows</th><th class="num">Actual rows</th><th class="num">Loops</th><th class="num">q-error</th><th class="num">Self time</th><th>Filter / condition</th></tr></thead>
+<tbody>
+{% for r in plan_rows(i.plan.plan) %}
+<tr>
+  <td style="padding-left: {{ 8 + r.depth * 18 }}px">{{ r.node }}{% if r.relation %} <span class="muted">on {{ r.relation }}</span>{% endif %}{% if r.index %} <span class="muted">using {{ r.index }}</span>{% endif %}{% if r.spilled %} <span class="pill INCONCLUSIVE">spill</span>{% endif %}</td>
+  <td class="num">{{ r.est|num }}</td>
+  <td class="num">{{ r.act|num }}</td>
+  <td class="num">{{ r.loops|num }}</td>
+  <td class="num {% if r.q_error and r.q_error >= 10 %}hl{% endif %}">{{ r.q_error|num }}</td>
+  <td class="num {% if r.share >= 0.5 %}hl{% endif %}">{{ r.self_ms|num }} ms</td>
+  <td><code>{{ r.filter or '' }}</code>{% if r.removed %}<br><span class="muted">removed by filter: {{ r.removed|num }}</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<details><summary>Extracted findings ({{ i.plan.findings|length }})</summary><pre>{{ i.plan.findings|tojson(indent=2) }}</pre></details>
+{% else %}<p class="muted">No plan captured yet.</p>{% endif %}
+</section>
+
+<section class="panel">
+<h2>3 · Diagnosis (hypotheses, not conclusions)</h2>
+{% for d in i.diagnoses %}
+<p><b><code>{{ d.rule }}</code></b> — {{ d.hypothesis }}</p>
+<p class="muted">Limitations: {{ d.limitations }}</p>
+{% else %}<p class="muted">Not investigated yet.</p>{% endfor %}
+</section>
+
+<section class="panel">
+<h2>4 · Candidates, experiments and verdicts</h2>
+{% for c in i.candidates %}
+<div class="panel">
+  <p><span class="pill {{ c.label or c.status }}">{{ c.label or c.status }}</span>
+  <b>{{ c.description }}</b> <span class="muted">({{ c.kind }})</span></p>
+  {% if c.hypopg %}
+  <p class="muted">HypoPG what-if: planner {{ 'would' if c.hypopg.used_by_target else 'would NOT' }} use it
+  (estimated cost {{ c.hypopg.target_cost_before|num }} → {{ c.hypopg.target_cost_after|num }}).
+  Guardrail set: reads whose plan would change {{ c.hypopg.affected_reads or 'none' }}, writes on the table {{ c.hypopg.writes_on_table or 'none' }}.</p>
+  {% endif %}
+  {% if c.reason %}<p>{{ c.reason }}</p>{% endif %}
+  {% if c.error %}<pre>{{ c.error }}</pre>{% endif %}
+  {% if c.target %}
+  {% set e = c.target.effect %}
+  <div class="grid">
+    <div class="stat"><b>{{ e.ratio|pct }}</b><span>target time change (B vs A)</span></div>
+    <div class="stat"><b>[{{ '%.3f'|format(e.ci_low) }}, {{ '%.3f'|format(e.ci_high) }}]</b><span>{{ (e.confidence*100)|round|int }}% CI of time ratio</span></div>
+    <div class="stat"><b>{{ e.median_us_a|num }} → {{ e.median_us_b|num }} µs</b><span>median execution A → B</span></div>
+    <div class="stat"><b>{{ e.n_blocks }}</b><span>paired blocks</span></div>
+  </div>
+  {% set st = ratio_strip(e) %}
+  {% if st %}
+  <svg viewBox="0 0 {{ st.width }} 54" width="100%" role="img" aria-label="Per-block time ratios">
+    <rect x="{{ st.ci[0] }}" y="10" width="{{ [st.ci[1]-st.ci[0], 1]|max }}" height="22" fill="var(--accent)" opacity="0.15"/>
+    <line x1="{{ st.one }}" x2="{{ st.one }}" y1="4" y2="38" stroke="var(--muted)" stroke-dasharray="3 3"/>
+    {% for x in st.dots %}<circle cx="{{ x }}" cy="21" r="3.5" fill="var(--accent)" opacity="0.7"/>{% endfor %}
+    <line x1="{{ st.est }}" x2="{{ st.est }}" y1="8" y2="34" stroke="var(--ink)" stroke-width="2"/>
+    <text x="{{ st.one + 3 }}" y="48">1.0 (no change)</text>
+    <text x="4" y="48">{{ st.lo_label }}×</text><text x="{{ st.width - 50 }}" y="48">{{ st.hi_label }}×</text>
+  </svg>
+  <p class="muted">Each dot is one block's time ratio B/A (log scale); the band is the bootstrap CI.</p>
+  {% endif %}
+  {% if c.guardrail and c.guardrail.queries %}
+  <table>
+    <thead><tr><th>Guardrail query</th><th class="num">Weight</th><th class="num">Time change</th><th class="num">Adjusted CI</th><th>Collateral regression?</th></tr></thead>
+    <tbody>{% for g in c.guardrail.queries %}
+      <tr><td><code>{{ g.query }}</code></td><td class="num">{{ g.weight }}</td><td class="num">{{ g.ratio|pct }}</td>
+      <td class="num">[{{ '%.2f'|format(g.ci_low) }}, {{ '%.2f'|format(g.ci_high) }}]</td>
+      <td>{% if g.collateral_regression %}<span class="pill REJECTED">yes</span>{% else %}no{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+  <p class="muted">Frequency-weighted change in tracked workload time: {{ c.guardrail.weighted_change_pct }}% (informational; the verdict uses the per-query veto).</p>
+  {% endif %}
+  <p class="muted">Experiment #{{ c.experiment_id }} · environment: {{ c.env_label }} · raw runs: <a href="/api/experiments/{{ c.experiment_id }}/runs">JSON</a></p>
+  {% endif %}
+</div>
+{% else %}<p class="muted">No candidates.</p>{% endfor %}
+</section>
+
+<section class="panel tablewrap">
+<h2>5 · Structurally similar past incidents <span class="muted">(context only, not proof of the same cause)</span></h2>
+{% if i.similar %}
+<table><thead><tr><th>#</th><th>Query</th><th>Scenario</th><th class="num">Cosine distance</th><th>What was tested</th></tr></thead><tbody>
+{% for s in i.similar %}<tr><td><a href="/incidents/{{ s.incident_id }}">{{ s.incident_id }}</a></td><td><code>{{ s.template_name }}</code></td><td class="muted">{{ s.scenario or '' }}</td><td class="num">{{ s.distance }}</td><td>{{ s.tested or '—' }}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p class="muted">No indexed incidents to compare with.</p>{% endif %}
+</section>
+{% endblock %}

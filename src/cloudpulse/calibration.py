@@ -12,7 +12,7 @@ difference introduced by cloning. Results are written to results/calibration/.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from cloudpulse.bench import env as envmod
@@ -36,7 +36,7 @@ def _q(name: str) -> QuerySpec:
 
 def run_calibration(settings: Settings, repeats: int = 10, blocks: int = 12,
                     scale: str = "default", seed: int = 42, log=print) -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out = REPO_ROOT / "results" / "calibration" / stamp
     out.mkdir(parents=True)
     records = []

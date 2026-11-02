@@ -1,0 +1,38 @@
+{
+  "name": "aa_orders_by_customer",
+  "description": "A/A check: both arms identical. Expect no meaningful difference.",
+  "scale": "default",
+  "seed": 42,
+  "baseline_sql": [
+    "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+    "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+    "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+    "ANALYZE orders"
+  ],
+  "queries": [
+    {
+      "name": "orders_by_customer",
+      "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s",
+      "kind": "read",
+      "params": {
+        "type": "customer_mix",
+        "n": 20
+      },
+      "weight": 30
+    }
+  ],
+  "arm_a": {
+    "session": {
+      "work_mem": "64MB"
+    }
+  },
+  "arm_b": {
+    "session": {
+      "work_mem": "64MB"
+    }
+  },
+  "protocol": {
+    "blocks": 15,
+    "warmup_rounds": 1
+  }
+}
