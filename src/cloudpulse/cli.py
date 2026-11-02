@@ -55,6 +55,20 @@ def cmd_evaluate(args) -> None:
     print(f"results in {out}")
 
 
+def cmd_similarity(args) -> None:
+    import json as _json
+    from datetime import datetime, timezone
+
+    from cloudpulse.config import REPO_ROOT
+    from cloudpulse.similarity import benchmark
+    res = [benchmark.run(k) for k in (1, 2, 4)]
+    out = REPO_ROOT / "results" / "similarity"
+    out.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    (out / f"{stamp}_benchmark.json").write_text(_json.dumps(res, indent=2))
+    print(_json.dumps(res, indent=2))
+
+
 def cmd_worker(args) -> None:  # pragma: no cover
     from cloudpulse.jobs.worker import run_forever
     run_forever(load_settings())
@@ -92,6 +106,9 @@ def main(argv: list[str] | None = None) -> None:
     s.add_argument("--baseline-rounds", type=int, default=14)
     s.add_argument("--fault-rounds", type=int, default=8)
     s.set_defaults(fn=cmd_evaluate)
+
+    s = sub.add_parser("similarity-benchmark")
+    s.set_defaults(fn=cmd_similarity)
 
     s = sub.add_parser("worker")
     s.set_defaults(fn=cmd_worker)

@@ -207,6 +207,8 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
         results.append(r)
         (out / "scenarios.json").write_text(json.dumps([asdict(x) for x in results], indent=2,
                                                        default=str))
+    from cloudpulse.similarity import search
+    search.index_all(settings.meta_dsn)  # structural vectors for "similar incidents"
     summary = {
         "environment": envmod.capture(settings.target_dsn, settings.env_label),
         "scale": scale, "seed": seed, "detector": asdict(detector.DetectorConfig()),
