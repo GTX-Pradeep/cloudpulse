@@ -1,0 +1,42 @@
+{
+  "label": "REJECTED",
+  "reason": "95% CI of time ratio B/A = [1.039, 1.128] lies entirely above 0.95: no meaningful improvement",
+  "target": {
+    "label": "REJECTED",
+    "reason": "95% CI of time ratio B/A = [1.039, 1.128] lies entirely above 0.95: no meaningful improvement",
+    "effect": {
+      "query": "monthly_revenue_top_customers",
+      "n_blocks": 15,
+      "ratio": 1.0767478785280231,
+      "ci_low": 1.0385662476269473,
+      "ci_high": 1.1275585789617883,
+      "confidence": 0.95,
+      "median_us_a": 1793318.16,
+      "median_us_b": 1950843.31,
+      "block_ratios": [
+        1.3768,
+        0.9981,
+        1.1022,
+        1.0127,
+        1.1392,
+        0.9918,
+        1.1002,
+        0.9817,
+        1.0584,
+        1.1164,
+        1.0807,
+        1.0179,
+        1.0488,
+        1.0878,
+        1.092
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": 7.67
+    }
+  },
+  "guardrail": [],
+  "collateral": [],
+  "weighted_change_pct": 7.67,
+  "warnings": []
+}
