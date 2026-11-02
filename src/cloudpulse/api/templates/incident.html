@@ -17,7 +17,7 @@
 </div>
 {% set s = sparkline(i.evidence.series or []) %}
 {% if s.path %}
-<svg viewBox="0 0 {{ s.width }} {{ s.height }}" width="100%" role="img" aria-label="Mean latency per interval">
+<svg viewBox="0 0 {{ s.width }} {{ s.height }}" width="{{ s.width }}" height="{{ s.height }}" style="max-width:100%;height:auto" role="img" aria-label="Mean latency per interval">
   <path d="{{ s.path }}" fill="none" stroke="var(--accent)" stroke-width="2"/>
   {% for idx in i.evidence.anomalous_points or [] %}{% if idx < s.points|length %}
   <circle cx="{{ s.points[idx][0] }}" cy="{{ s.points[idx][1] }}" r="4" fill="var(--bad)"/>{% endif %}{% endfor %}
@@ -37,12 +37,12 @@
 {% for r in plan_rows(i.plan.plan) %}
 <tr>
   <td style="padding-left: {{ 8 + r.depth * 18 }}px">{{ r.node }}{% if r.relation %} <span class="muted">on {{ r.relation }}</span>{% endif %}{% if r.index %} <span class="muted">using {{ r.index }}</span>{% endif %}{% if r.spilled %} <span class="pill INCONCLUSIVE">spill</span>{% endif %}</td>
-  <td class="num">{{ r.est|num }}</td>
-  <td class="num">{{ r.act|num }}</td>
-  <td class="num">{{ r.loops|num }}</td>
+  <td class="num">{{ r.est|int_ }}</td>
+  <td class="num">{{ r.act|int_ }}</td>
+  <td class="num">{{ r.loops|int_ }}</td>
   <td class="num {% if r.q_error and r.q_error >= 10 %}hl{% endif %}">{{ r.q_error|num }}</td>
   <td class="num {% if r.share >= 0.5 %}hl{% endif %}">{{ r.self_ms|num }} ms</td>
-  <td><code>{{ r.filter or '' }}</code>{% if r.removed %}<br><span class="muted">removed by filter: {{ r.removed|num }}</span>{% endif %}</td>
+  <td>{% if r.filter %}<code>{{ r.filter }}</code>{% endif %}{% if r.removed %}<br><span class="muted">removed by filter: {{ r.removed|num }}</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -82,15 +82,15 @@
   </div>
   {% set st = ratio_strip(e) %}
   {% if st %}
-  <svg viewBox="0 0 {{ st.width }} 54" width="100%" role="img" aria-label="Per-block time ratios">
+  <svg viewBox="0 0 {{ st.width }} 54" width="{{ st.width }}" height="54" style="max-width:100%;height:auto" role="img" aria-label="Per-block time ratios">
     <rect x="{{ st.ci[0] }}" y="10" width="{{ [st.ci[1]-st.ci[0], 1]|max }}" height="22" fill="var(--accent)" opacity="0.15"/>
     <line x1="{{ st.one }}" x2="{{ st.one }}" y1="4" y2="38" stroke="var(--muted)" stroke-dasharray="3 3"/>
     {% for x in st.dots %}<circle cx="{{ x }}" cy="21" r="3.5" fill="var(--accent)" opacity="0.7"/>{% endfor %}
     <line x1="{{ st.est }}" x2="{{ st.est }}" y1="8" y2="34" stroke="var(--ink)" stroke-width="2"/>
-    <text x="{{ st.one + 3 }}" y="48">1.0 (no change)</text>
-    <text x="4" y="48">{{ st.lo_label }}×</text><text x="{{ st.width - 50 }}" y="48">{{ st.hi_label }}×</text>
+    <text x="{{ st.one }}" y="50" text-anchor="middle">1.0</text>
+    <text x="4" y="50">{{ st.lo_label }}×</text>
   </svg>
-  <p class="muted">Each dot is one block's time ratio B/A (log scale); the band is the bootstrap CI.</p>
+  <p class="muted">Each dot is one block's time ratio B/A (log scale). Shaded band: bootstrap CI. Black line: estimate. Dashed line: 1.0 = no change.</p>
   {% endif %}
   {% if c.guardrail and c.guardrail.queries %}
   <table>

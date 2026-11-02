@@ -64,7 +64,7 @@ def incident_detail(meta: str, incident_id: int) -> dict:
 # --------------------------------------------------------------------------- view helpers
 
 
-def sparkline(values: list[float | None], width: int = 560, height: int = 120) -> dict:
+def sparkline(values: list[float | None], width: int = 1000, height: int = 140) -> dict:
     pts = [(i, v) for i, v in enumerate(values) if v is not None]
     if len(pts) < 2:
         return {"path": "", "width": width, "height": height, "max": 0, "points": []}
@@ -76,7 +76,7 @@ def sparkline(values: list[float | None], width: int = 560, height: int = 120) -
             "height": height, "max": vmax, "points": coords}
 
 
-def ratio_strip(effect: dict | None, width: int = 520) -> dict | None:
+def ratio_strip(effect: dict | None, width: int = 1000) -> dict | None:
     """Log-scale strip of per-block ratios with the CI band and the 1.0 line."""
     if not effect or not effect.get("block_ratios"):
         return None
@@ -118,6 +118,7 @@ def plan_rows(plan_json) -> list[dict]:
 
 templates.env.globals.update(sparkline=sparkline, ratio_strip=ratio_strip, plan_rows=plan_rows)
 templates.env.filters["pct"] = lambda r: "—" if r is None else f"{(r - 1) * 100:+.1f}%"
+templates.env.filters["int_"] = lambda v: "—" if v is None else f"{v:,.0f}"
 templates.env.filters["num"] = lambda v: "—" if v is None else (
     f"{v:,.0f}" if abs(v) >= 100 else f"{v:,.2f}")
 
