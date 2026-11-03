@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Reproduce every CloudPulse result on your own machine.
 #
-#   ./scripts/reproduce.sh            full run (about 1.5-2.5 hours on a laptop)
+#   ./scripts/reproduce.sh            full run (about 3-5 hours on a laptop)
 #   ./scripts/reproduce.sh --quick    smaller dataset and fewer scenarios (~15 min)
 #
 # Needs: Docker (with compose v2), Python 3.11+, git. On Windows, run it from WSL2.
@@ -51,6 +51,10 @@ else
   cloudpulse calibrate --repeats 10 --blocks 12 --scale default
   echo "==> Ground-truth evaluation (all scenarios)"
   cloudpulse evaluate --scale default
+  echo "==> Replication of every tested candidate (3 extra runs each)"
+  cloudpulse replicate --repeats 3
+  echo "==> TPC-H validation (scale factor 1)"
+  cloudpulse evaluate --pack tpch --scale tpch-sf1 --keep-meta --label tpch-sf1
 fi
 
 echo

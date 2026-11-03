@@ -10,7 +10,7 @@
 | s0_control | — | — | none | — | — |
 | s1_dropped_fk_index | 817.10× (`orders_by_customer`) | yes (2); also flagged: latest_orders_for_customer | none | selective_seq_scan ✅ | `CREATE INDEX ON orders (customer_id)` → **SUPPORTED** (target -99.5%) |
 | s2_stale_statistics | 1.83× (`segment_revenue_for_status`) | **no** | none | — ❌ | — |
-| s3_work_mem_lowered | 1.03× (`monthly_revenue_top_customers`) | **no** | none | — ❌ | — |
+| s3_work_mem_lowered | 1.03× (`monthly_revenue_top_customers`) | nothing to detect (fault effect below 1.5×) | none | — | — |
 | s4_updated_at_index_dropped | 2635.15× (`recently_updated_orders`) | yes (3) | none | selective_seq_scan ✅ | `CREATE INDEX ON orders (updated_at)` → **REJECTED** (target -99.6%); collateral: touch_order |
 | s5_created_at_index_dropped | 4752.46× (`recent_orders_feed`) | yes (3) | none | selective_seq_scan ✅ | `CREATE INDEX ON orders (created_at)` → **SUPPORTED** (target -99.6%) |
 | s6_noisy_neighbor | — | —; also flagged: monthly_revenue_top_customers, segment_revenue_for_status | none | — | `SET work_mem = '256MB' for this query's session` → **REJECTED** (target +7.7%)<br>`CREATE INDEX ON orders (status)` → **SUPPORTED** (target -66.8%) |

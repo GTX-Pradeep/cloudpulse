@@ -300,14 +300,17 @@ def render_markdown(summary: dict) -> str:
         "|---|---|---|---|---|---|",
     ]
     for s in summary["scenarios"]:
+        obs0 = s.get("observed_ratio", {}).get(s["expected_query"]) if s["expected_query"] else None
+        nothing = obs0 is not None and obs0 < detector.DetectorConfig().min_ratio and not s["detected"]
         det = ("—" if s["expected_query"] is None
-               else (f"yes ({s['detection_delay_rounds']})" if s["detected"] else "**no**"))
+               else (f"yes ({s['detection_delay_rounds']})" if s["detected"]
+                     else ("nothing to detect (fault effect below 1.5×)" if nothing else "**no**")))
         others = [q for q in s["flagged_after_fault"] if q != s["expected_query"]]
         if others:
             det += f"; also flagged: {', '.join(others)}"
         fp = ", ".join(s["baseline_false_positives"]) or "none"
         diag = ", ".join(s["diagnosis_rules"]) or "—"
-        if s["diagnosis_correct"] is not None:
+        if s["diagnosis_correct"] is not None and not nothing:
             diag += " ✅" if s["diagnosis_correct"] else " ❌"
         obs = s.get("observed_ratio", {}).get(s["expected_query"]) if s["expected_query"] else None
         obs_txt = "—" if obs is None else f"{obs:.2f}× (`{s['expected_query']}`)"

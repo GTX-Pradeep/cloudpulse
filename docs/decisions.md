@@ -349,3 +349,21 @@ not wall-clock time. Dividing it by wall-clock execution time is meaningless.
 - **Impact:** hotspot findings are descriptive only (no rule creates a candidate from
   them), so no diagnosis or verdict was affected. Stored findings from earlier runs
   keep their old share values.
+
+### F-13 · False alarms on TPC-H's heavy analytic queries
+On TPC-H (`results/evaluation/20261103T020258Z_tpch-sf1`), the detector declared
+three regressions before any fault: Q3 in two scenarios and Q14 in one. The
+e-commerce workload had none in 954 fault-free query-intervals.
+- **Cause:** these queries run once per telemetry interval with randomly drawn
+  substitution parameters, and their cost depends strongly on the draw (Q3: about
+  550 ms or about 950 ms depending on market segment and date). With one call per
+  interval, the "interval mean" is a single draw from a two-peaked distribution.
+  Three high draws in four intervals satisfy the sustain rule. This is the same root
+  cause as the S2 miss (F-5 area, D-012), in the other direction: averaging over
+  parameters with very different costs.
+- **Harm:** none. Each false alarm was investigated; HypoPG filtered the proposed
+  index out (the planner would not use it) or the diagnosis was `cause_unclear`, so
+  the incidents closed as `no_action` without any experiment or recommendation.
+- **Not fixed by re-tuning:** raising thresholds after seeing this result would
+  overfit to it. The principled fix is per-parameter-group detection (or more calls
+  per interval), listed as future work.

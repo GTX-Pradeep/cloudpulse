@@ -62,11 +62,13 @@ module.exports = () => {
   const scenRow = (s, note = "") => {
     const q = s.expected_query;
     const obs = q && s.observed_ratio[q] ? `${s.observed_ratio[q].toFixed(2)}×` : "—";
+    const nothing = q && s.observed_ratio[q] !== undefined && s.observed_ratio[q] < 1.5 && !s.detected;
     const det = q === null ? (Object.keys(s.flagged_after_fault).length ? `flagged: ${Object.keys(s.flagged_after_fault).join(", ")}` : "no alarms")
-      : s.detected ? `yes, interval ${s.detection_delay_rounds} after fault` : "no (within window)";
-    const diag = s.diagnosis_rules.length ? s.diagnosis_rules.join(", ") + (s.diagnosis_correct === true ? " (correct)" : s.diagnosis_correct === false ? " (missed)" : "") : "—";
+      : s.detected ? `yes, interval ${s.detection_delay_rounds} after fault` : nothing ? "nothing to detect (effect < 1.5×)" : "no (within window)";
+    const diag = s.diagnosis_rules.length ? s.diagnosis_rules.join(", ") + (s.diagnosis_correct === true ? " (correct)" : s.diagnosis_correct === false && !nothing ? " (missed)" : "") : "—";
     const cs = (q ? cands(s, q) : cands(s)).map(verdictText).join("\n") || "—";
-    return [sc(s.scenario) + note, obs, det, `${s.baseline_false_positives.length}`, diag, cs];
+    const fp = s.baseline_false_positives.length ? `${s.baseline_false_positives.length} (${s.baseline_false_positives.join(", ")})` : "0";
+    return [sc(s.scenario) + note, obs, det, fp, diag, cs];
   };
 
 
@@ -181,6 +183,7 @@ module.exports = () => {
       { t: "p", text: `Same engine, same rules, same thresholds, applied to the TPC-H benchmark (${tpch.scale}, data from \`tpchgen-cli\`; ${path.dirname(tpchFile)}). Nothing was tuned for TPC-H.` },
       { t: "table", headers: ["Scenario", "Measured effect on its query", "Detected", "False alarms before fault", "Diagnosis", "Candidate → verdict"], widths: [0.7, 0.9, 1.2, 0.7, 1.1, 3.2], rows },
       { t: "img", file: "chart_tpch.png", width: 600, caption: "Figure 14.7: Measured effect of each TPC-H fault on its query." },
+      { t: "p", text: "**Reading it:** both faults that really slowed their query (t1, t2) were detected, correctly diagnosed and fixed with a SUPPORTED index. Dropping the `o_orderdate` index (t3) made Q4 *faster*, so there was nothing to detect. The weakness: **3 false alarms** before any fault, on Q3 and Q14. These run once per interval with parameters whose cost differs about 2×, so one interval's mean is one random draw (F-13). Each false alarm was investigated and closed as no action (HypoPG filtered the index out, or the cause was unclear): no wrong recommendation was made." },
     );
   }
   blocks.push(
@@ -245,7 +248,7 @@ module.exports = () => {
       "**Diagnosis:** I parse EXPLAIN ANALYZE JSON into a tree, compute q-errors and spills, and explainable rules produce hypotheses plus candidates.",
       "**Experiment:** template-copied twin databases so layout and statistics are identical; alternating blocks; a result-equivalence check; a paired block bootstrap; a decision rule fixed in advance.",
       "**Guardrail:** HypoPG finds which other queries, and which parameter values, would change plan; those plus writes are benchmarked with Bonferroni correction and a 10% veto.",
-      "**Honesty:** A/A calibration, replication, TPC-H validation, and twelve documented mistakes, including two runs where the headline result was wrong and how I found out.",
+      "**Honesty:** A/A calibration, replication, TPC-H validation, and thirteen documented mistakes, including two runs where the headline result was wrong and how I found out.",
     ] },
     { t: "h2", text: "18.3 How to demo it" },
     { t: "steps", ref: "steps21", items: [

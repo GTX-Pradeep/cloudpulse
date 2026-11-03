@@ -128,6 +128,24 @@ CloudPulse now reports such candidates as UNSTABLE instead of picking a side
 (D-023, F-11). Replication ran after the sandbox restarted on a 2.30 GHz host; each
 results file records its own hardware.
 
+### Does it work on a workload it was not designed for? (TPC-H)
+The same engine, rules, thresholds and decision rule, applied unchanged to the
+industry-standard **TPC-H** benchmark at scale factor 1 (6 million line items, data from
+the official generator, official queries Q3/Q4/Q6/Q14 with specification-defined
+parameters) ([`results/evaluation/…_tpch-sf1`](results/evaluation/20261103T020258Z_tpch-sf1/summary.md)):
+
+| Fault | Measured effect | Detected | Diagnosis | Candidate → verdict |
+|---|---:|---|---|---|
+| t1: `lineitem(l_shipdate)` index dropped | Q14 2.50× slower | 4th interval | `selective_seq_scan` ✅ | `CREATE INDEX (l_shipdate)` → **SUPPORTED** (−43.8%, CI [0.54, 0.58]; UPDATE on lineitem clean) |
+| t2: `orders(o_custkey)` index dropped | 761× slower | 3rd interval | `selective_seq_scan` ✅ | `CREATE INDEX (o_custkey)` → **SUPPORTED** (−99.7%) |
+| t3: `orders(o_orderdate)` index dropped | Q4 0.77× (got *faster*) | nothing to detect | — | — |
+
+Both real regressions were detected, correctly diagnosed and fixed. The weakness: the
+detector raised **3 false alarms** on Q3 and Q14 before any fault. These run once per
+interval with parameters whose cost differs about 2× (F-13). Each false alarm was
+investigated and closed as "no action" (HypoPG filtered the index out, or the cause was
+unclear), so nothing wrong was recommended.
+
 ### Is the measurement method trustworthy? (A/A calibration)
 10 repeats × 5 queries with **identical** arms and fresh twin databases each time
 ([`results/calibration`](results/calibration/20261102T185543Z/summary.json)):
@@ -150,14 +168,15 @@ written by the same author as the features, so this shows the features behave
 as designed, not that they generalise.
 
 ### Mistakes found and fixed along the way
-The [decision log](docs/decisions.md) records 12 of them, including:
+The [decision log](docs/decisions.md) records 13 of them, including:
 - a `work_mem` hypothesis that measurement disproved (F-1);
 - EXPLAIN buffer counters being inclusive of child nodes (F-2);
 - psycopg splitting one query into several `pg_stat_statements` entries by integer size (F-4/D-019);
 - two guardrail sampling gaps (F-7, F-9);
 - a bookkeeping bug that produced fake false positives (F-8);
 - verdicts that flip between runs when an effect sits on a decision margin (F-11);
-- impossible "hotspot" shares in parallel plans, found while writing the guide (F-12).
+- impossible "hotspot" shares in parallel plans, found while writing the guide (F-12);
+- false alarms on TPC-H queries whose cost depends on their parameters (F-13).
 
 
 ## How it works
@@ -189,7 +208,7 @@ flowchart LR
 | **Guardrail** | Every query whose plan may change plus every write on the table, Bonferroni-adjusted, +10% veto | A locally excellent index can be globally harmful |
 
 More detail: [architecture](docs/architecture.md) ·
-[decision log](docs/decisions.md) (every design choice, its alternatives, and **12 documented mistakes**) ·
+[decision log](docs/decisions.md) (every design choice, its alternatives, and **13 documented mistakes**) ·
 [learning notes](docs/learn/).
 
 ## Quick start
@@ -206,6 +225,7 @@ pytest -q                                  # unit, golden-file and integration t
 
 cloudpulse bench experiments/ab_created_at_index_trap.json   # A/B + guardrail; dev sandbox gave REJECTED (5.21x collateral)
 cloudpulse evaluate --scale small --scenario s5_created_at_index_dropped
+cloudpulse evaluate --pack tpch --scale tpch-sf0.1 --scenario t2_custkey_index_dropped   # TPC-H
 cloudpulse serve                           # http://127.0.0.1:8000
 ```
 
@@ -249,7 +269,8 @@ docs/           architecture, decision log, learning notes
   (90% A/A coverage for a nominal 95%). Decision margins absorb this, but small
   effects (±10–15%), especially on writes, need replication.
 - The detector works on interval means, so a template whose parameters have very
-  different costs can hide or delay a regression that affects only some values (S2).
+  different costs can hide or delay a regression that affects only some values (S2),
+  or raise false alarms when an interval holds a single expensive draw (TPC-H, F-13).
 - The lab rebuilds the target's state from a known generator plus scenario SQL. A
   real deployment would restore a snapshot.
 - Not diagnosable: lock contention, I/O or CPU saturation, checkpoints, bloat,

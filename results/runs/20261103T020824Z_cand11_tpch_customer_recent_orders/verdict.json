@@ -1,0 +1,42 @@
+{
+  "label": "SUPPORTED",
+  "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 0 guardrail queries",
+  "target": {
+    "label": "SUPPORTED",
+    "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)",
+    "effect": {
+      "query": "tpch_customer_recent_orders",
+      "n_blocks": 15,
+      "ratio": 0.002771945195578106,
+      "ci_low": 0.002478066489302604,
+      "ci_high": 0.0031940796365869883,
+      "confidence": 0.95,
+      "median_us_a": 52298.795,
+      "median_us_b": 122.66499999999999,
+      "block_ratios": [
+        0.0026,
+        0.0021,
+        0.0028,
+        0.0023,
+        0.0029,
+        0.0022,
+        0.0031,
+        0.0026,
+        0.0034,
+        0.0024,
+        0.0029,
+        0.0025,
+        0.0031,
+        0.0024,
+        0.0061
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -99.72
+    }
+  },
+  "guardrail": [],
+  "collateral": [],
+  "weighted_change_pct": -99.72,
+  "warnings": []
+}

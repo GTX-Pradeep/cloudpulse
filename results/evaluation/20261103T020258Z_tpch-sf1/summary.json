@@ -1,0 +1,632 @@
+{
+  "environment": {
+    "captured_at_utc": "2026-11-03T02:10:00+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "c875c05-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v230",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "65536kB",
+      "extensions": {
+        "pg_stat_statements": "1.10",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "scale": "tpch-sf1",
+  "seed": 42,
+  "detector": {
+    "window": 20,
+    "min_baseline": 8,
+    "min_calls": 1,
+    "z_threshold": 4.0,
+    "min_ratio": 1.5,
+    "rel_floor": 0.05,
+    "abs_floor_ms": 0.05,
+    "sustain_k": 3,
+    "sustain_n": 4
+  },
+  "label": "tpch-sf1",
+  "protocol": {
+    "baseline_rounds": 14,
+    "fault_rounds": 8
+  },
+  "delay_offset_corrected": true,
+  "pack": "tpch",
+  "scenarios": [
+    {
+      "scenario": "t0_control",
+      "title": "TPC-H: no fault (false-positive control)",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {},
+      "expected_query": null,
+      "detected": null,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": null,
+      "candidates": [],
+      "incidents": [],
+      "observed_ratio": {
+        "tpch_customer_recent_orders": 0.969,
+        "tpch_order_lines": 1.038,
+        "tpch_order_lookup": 0.911,
+        "tpch_q14_promotion_effect": 1.266,
+        "tpch_q3_shipping_priority": 0.917,
+        "tpch_q4_order_priority": 0.827,
+        "tpch_q6_forecast_revenue": 1.073,
+        "tpch_touch_lineitem": 0.878
+      },
+      "seconds": 42.0
+    },
+    {
+      "scenario": "t1_shipdate_index_dropped",
+      "title": "TPC-H: index on lineitem.l_shipdate dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [],
+      "flagged_after_fault": {
+        "tpch_q14_promotion_effect": 4
+      },
+      "expected_query": "tpch_q14_promotion_effect",
+      "detected": true,
+      "detection_delay_rounds": 4,
+      "diagnosis_rules": [
+        "selective_seq_scan"
+      ],
+      "diagnosis_correct": true,
+      "candidates": [
+        {
+          "id": 10,
+          "kind": "index",
+          "description": "CREATE INDEX ON lineitem (l_shipdate)",
+          "status": "tested",
+          "hypopg": {
+            "details": {
+              "params_checked": 60,
+              "plans_changed_per_query": {}
+            },
+            "index_ddl": "CREATE INDEX cp_lineitem_l_shipdate_idx ON lineitem (l_shipdate)",
+            "affected_reads": [],
+            "changed_params": {},
+            "used_by_target": true,
+            "writes_on_table": [
+              "tpch_touch_lineitem"
+            ],
+            "target_cost_after": 117209.45416666666,
+            "target_cost_before": 160750.68083333332
+          },
+          "label": "SUPPORTED",
+          "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+          "target": {
+            "label": "SUPPORTED",
+            "effect": {
+              "query": "tpch_q14_promotion_effect",
+              "ratio": 0.5618338085174793,
+              "ci_low": 0.5388940852289771,
+              "ci_high": 0.5834525608450791,
+              "n_blocks": 15,
+              "change_pct": -43.82,
+              "confidence": 0.95,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 367763.045,
+              "median_us_b": 211986.51,
+              "block_ratios": [
+                0.5364,
+                0.5543,
+                0.5536,
+                0.5837,
+                0.5651,
+                0.5903,
+                0.64,
+                0.5017,
+                0.6188,
+                0.5947,
+                0.5515,
+                0.5543,
+                0.5669,
+                0.5811,
+                0.46
+              ]
+            },
+            "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster)"
+          },
+          "guardrail": {
+            "queries": [
+              {
+                "query": "tpch_touch_lineitem",
+                "ratio": 0.9800665427050309,
+                "ci_low": 0.9373660016189103,
+                "weight": 10,
+                "ci_high": 1.0165513416903145,
+                "n_blocks": 15,
+                "change_pct": -1.99,
+                "confidence": 0.95,
+                "timeouts_a": 0,
+                "timeouts_b": 0,
+                "median_us_a": 94.73,
+                "median_us_b": 94.9,
+                "block_ratios": [
+                  0.9127,
+                  0.7899,
+                  1.0193,
+                  0.9932,
+                  1.0481,
+                  1.0486,
+                  1.0474,
+                  0.9726,
+                  1.0451,
+                  0.9802,
+                  0.9135,
+                  0.8794,
+                  1.0659,
+                  1.0044,
+                  1.0268
+                ],
+                "collateral_regression": false
+              }
+            ],
+            "warnings": [],
+            "collateral": [],
+            "weighted_change_pct": -43.76
+          }
+        }
+      ],
+      "incidents": [
+        {
+          "incident_id": 10,
+          "query": "tpch_q14_promotion_effect",
+          "id": 10,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON lineitem (l_shipdate) (awaiting human review)",
+          "ratio": 2.932979023592435,
+          "plan_changed": true,
+          "diagnoses": [
+            {
+              "rule": "selective_seq_scan",
+              "hypothesis": "Seq Scan on lineitem examined 6,001,215 rows to keep 77,313 (1.29%). An index on lineitem(l_shipdate) could let PostgreSQL read only matching rows."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 10,
+              "kind": "index",
+              "description": "CREATE INDEX ON lineitem (l_shipdate)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 60,
+                  "plans_changed_per_query": {}
+                },
+                "index_ddl": "CREATE INDEX cp_lineitem_l_shipdate_idx ON lineitem (l_shipdate)",
+                "affected_reads": [],
+                "changed_params": {},
+                "used_by_target": true,
+                "writes_on_table": [
+                  "tpch_touch_lineitem"
+                ],
+                "target_cost_after": 117209.45416666666,
+                "target_cost_before": 160750.68083333332
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "tpch_q14_promotion_effect",
+                  "ratio": 0.5618338085174793,
+                  "ci_low": 0.5388940852289771,
+                  "ci_high": 0.5834525608450791,
+                  "n_blocks": 15,
+                  "change_pct": -43.82,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 367763.045,
+                  "median_us_b": 211986.51,
+                  "block_ratios": [
+                    0.5364,
+                    0.5543,
+                    0.5536,
+                    0.5837,
+                    0.5651,
+                    0.5903,
+                    0.64,
+                    0.5017,
+                    0.6188,
+                    0.5947,
+                    0.5515,
+                    0.5543,
+                    0.5669,
+                    0.5811,
+                    0.46
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [
+                  {
+                    "query": "tpch_touch_lineitem",
+                    "ratio": 0.9800665427050309,
+                    "ci_low": 0.9373660016189103,
+                    "weight": 10,
+                    "ci_high": 1.0165513416903145,
+                    "n_blocks": 15,
+                    "change_pct": -1.99,
+                    "confidence": 0.95,
+                    "timeouts_a": 0,
+                    "timeouts_b": 0,
+                    "median_us_a": 94.73,
+                    "median_us_b": 94.9,
+                    "block_ratios": [
+                      0.9127,
+                      0.7899,
+                      1.0193,
+                      0.9932,
+                      1.0481,
+                      1.0486,
+                      1.0474,
+                      0.9726,
+                      1.0451,
+                      0.9802,
+                      0.9135,
+                      0.8794,
+                      1.0659,
+                      1.0044,
+                      1.0268
+                    ],
+                    "collateral_regression": false
+                  }
+                ],
+                "warnings": [],
+                "collateral": [],
+                "weighted_change_pct": -43.76
+              }
+            }
+          ]
+        }
+      ],
+      "observed_ratio": {
+        "tpch_customer_recent_orders": 0.928,
+        "tpch_order_lines": 1.123,
+        "tpch_order_lookup": 0.89,
+        "tpch_q14_promotion_effect": 2.505,
+        "tpch_q3_shipping_priority": 0.798,
+        "tpch_q4_order_priority": 0.893,
+        "tpch_q6_forecast_revenue": 1.134,
+        "tpch_touch_lineitem": 0.916
+      },
+      "seconds": 199.8
+    },
+    {
+      "scenario": "t2_custkey_index_dropped",
+      "title": "TPC-H: index on orders.o_custkey dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [
+        "tpch_q3_shipping_priority"
+      ],
+      "flagged_after_fault": {
+        "tpch_customer_recent_orders": 3
+      },
+      "expected_query": "tpch_customer_recent_orders",
+      "detected": true,
+      "detection_delay_rounds": 3,
+      "diagnosis_rules": [
+        "selective_seq_scan"
+      ],
+      "diagnosis_correct": true,
+      "candidates": [
+        {
+          "id": 11,
+          "kind": "index",
+          "description": "CREATE INDEX ON orders (o_custkey)",
+          "status": "tested",
+          "hypopg": {
+            "details": {
+              "params_checked": 60,
+              "plans_changed_per_query": {}
+            },
+            "index_ddl": "CREATE INDEX cp_orders_o_custkey_idx ON orders (o_custkey)",
+            "affected_reads": [],
+            "changed_params": {},
+            "used_by_target": true,
+            "writes_on_table": [],
+            "target_cost_after": 71.49,
+            "target_cost_before": 35717.79
+          },
+          "label": "SUPPORTED",
+          "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 0 guardrail queries",
+          "target": {
+            "label": "SUPPORTED",
+            "effect": {
+              "query": "tpch_customer_recent_orders",
+              "ratio": 0.002771945195578106,
+              "ci_low": 0.002478066489302604,
+              "ci_high": 0.0031940796365869883,
+              "n_blocks": 15,
+              "change_pct": -99.72,
+              "confidence": 0.95,
+              "timeouts_a": 0,
+              "timeouts_b": 0,
+              "median_us_a": 52298.795,
+              "median_us_b": 122.66499999999999,
+              "block_ratios": [
+                0.0026,
+                0.0021,
+                0.0028,
+                0.0023,
+                0.0029,
+                0.0022,
+                0.0031,
+                0.0026,
+                0.0034,
+                0.0024,
+                0.0029,
+                0.0025,
+                0.0031,
+                0.0024,
+                0.0061
+              ]
+            },
+            "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)"
+          },
+          "guardrail": {
+            "queries": [],
+            "warnings": [],
+            "collateral": [],
+            "weighted_change_pct": -99.72
+          }
+        }
+      ],
+      "incidents": [
+        {
+          "incident_id": 11,
+          "query": "tpch_customer_recent_orders",
+          "id": 11,
+          "status": "resolved",
+          "outcome": "SUPPORTED: CREATE INDEX ON orders (o_custkey) (awaiting human review)",
+          "ratio": 776.5395911661341,
+          "plan_changed": true,
+          "diagnoses": [
+            {
+              "rule": "selective_seq_scan",
+              "hypothesis": "Seq Scan on orders examined 1,500,000 rows to keep 18 (0.00%). An index on orders(o_custkey) could let PostgreSQL read only matching rows."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 11,
+              "kind": "index",
+              "description": "CREATE INDEX ON orders (o_custkey)",
+              "status": "tested",
+              "hypopg": {
+                "details": {
+                  "params_checked": 60,
+                  "plans_changed_per_query": {}
+                },
+                "index_ddl": "CREATE INDEX cp_orders_o_custkey_idx ON orders (o_custkey)",
+                "affected_reads": [],
+                "changed_params": {},
+                "used_by_target": true,
+                "writes_on_table": [],
+                "target_cost_after": 71.49,
+                "target_cost_before": 35717.79
+              },
+              "label": "SUPPORTED",
+              "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster); no collateral regression across 0 guardrail queries",
+              "target": {
+                "label": "SUPPORTED",
+                "effect": {
+                  "query": "tpch_customer_recent_orders",
+                  "ratio": 0.002771945195578106,
+                  "ci_low": 0.002478066489302604,
+                  "ci_high": 0.0031940796365869883,
+                  "n_blocks": 15,
+                  "change_pct": -99.72,
+                  "confidence": 0.95,
+                  "timeouts_a": 0,
+                  "timeouts_b": 0,
+                  "median_us_a": 52298.795,
+                  "median_us_b": 122.66499999999999,
+                  "block_ratios": [
+                    0.0026,
+                    0.0021,
+                    0.0028,
+                    0.0023,
+                    0.0029,
+                    0.0022,
+                    0.0031,
+                    0.0026,
+                    0.0034,
+                    0.0024,
+                    0.0029,
+                    0.0025,
+                    0.0031,
+                    0.0024,
+                    0.0061
+                  ]
+                },
+                "reason": "95% CI of time ratio B/A = [0.002, 0.003] lies entirely below 0.95 (>= 5% faster)"
+              },
+              "guardrail": {
+                "queries": [],
+                "warnings": [],
+                "collateral": [],
+                "weighted_change_pct": -99.72
+              }
+            }
+          ]
+        },
+        {
+          "incident_id": 12,
+          "query": "tpch_q3_shipping_priority",
+          "id": 12,
+          "status": "no_action",
+          "outcome": "no testable candidate",
+          "ratio": 1.721176866706597,
+          "plan_changed": false,
+          "diagnoses": [
+            {
+              "rule": "ordered_index_walk",
+              "hypothesis": "Index Scan on lineitem_pkey walked 584,252 rows and filtered out almost all of them. The planner likely assumed matching rows are spread evenly; a composite index lineitem(l_shipdate, l_orderkey) would find them directly."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 12,
+              "kind": "index",
+              "description": "CREATE INDEX ON lineitem (l_shipdate, l_orderkey)",
+              "status": "filtered_out",
+              "hypopg": {
+                "details": {
+                  "params_checked": 60,
+                  "plans_changed_per_query": {}
+                },
+                "index_ddl": "CREATE INDEX cp_lineitem_l_shipdate_l_orderkey_idx ON lineitem (l_shipdate, l_orderkey)",
+                "affected_reads": [],
+                "changed_params": {},
+                "used_by_target": false,
+                "writes_on_table": [
+                  "tpch_touch_lineitem"
+                ],
+                "target_cost_after": 199406.03999999998,
+                "target_cost_before": 199406.03999999998
+              },
+              "label": null,
+              "reason": null,
+              "target": null,
+              "guardrail": null
+            }
+          ]
+        }
+      ],
+      "observed_ratio": {
+        "tpch_customer_recent_orders": 761.449,
+        "tpch_order_lines": 1.109,
+        "tpch_order_lookup": 0.988,
+        "tpch_q14_promotion_effect": 1.256,
+        "tpch_q3_shipping_priority": 0.864,
+        "tpch_q4_order_priority": 0.806,
+        "tpch_q6_forecast_revenue": 1.193,
+        "tpch_touch_lineitem": 1.051
+      },
+      "seconds": 106.2
+    },
+    {
+      "scenario": "t3_orderdate_index_dropped",
+      "title": "TPC-H: index on orders.o_orderdate dropped",
+      "rounds": {
+        "baseline": 14,
+        "after_fault": 8
+      },
+      "baseline_false_positives": [
+        "tpch_q14_promotion_effect",
+        "tpch_q3_shipping_priority"
+      ],
+      "flagged_after_fault": {},
+      "expected_query": "tpch_q4_order_priority",
+      "detected": false,
+      "detection_delay_rounds": null,
+      "diagnosis_rules": [],
+      "diagnosis_correct": false,
+      "candidates": [],
+      "incidents": [
+        {
+          "incident_id": 13,
+          "query": "tpch_q14_promotion_effect",
+          "id": 13,
+          "status": "no_action",
+          "outcome": "no testable candidate",
+          "ratio": 1.808109854786332,
+          "plan_changed": false,
+          "diagnoses": [
+            {
+              "rule": "cause_unclear",
+              "hypothesis": "No supported, planner-visible cause was found in the captured plan."
+            }
+          ],
+          "candidates": []
+        },
+        {
+          "incident_id": 14,
+          "query": "tpch_q3_shipping_priority",
+          "id": 14,
+          "status": "no_action",
+          "outcome": "no testable candidate",
+          "ratio": 1.7038597598149428,
+          "plan_changed": false,
+          "diagnoses": [
+            {
+              "rule": "ordered_index_walk",
+              "hypothesis": "Index Scan on lineitem_pkey walked 584,252 rows and filtered out almost all of them. The planner likely assumed matching rows are spread evenly; a composite index lineitem(l_shipdate, l_orderkey) would find them directly."
+            }
+          ],
+          "candidates": [
+            {
+              "id": 13,
+              "kind": "index",
+              "description": "CREATE INDEX ON lineitem (l_shipdate, l_orderkey)",
+              "status": "filtered_out",
+              "hypopg": {
+                "details": {
+                  "params_checked": 60,
+                  "plans_changed_per_query": {}
+                },
+                "index_ddl": "CREATE INDEX cp_lineitem_l_shipdate_l_orderkey_idx ON lineitem (l_shipdate, l_orderkey)",
+                "affected_reads": [],
+                "changed_params": {},
+                "used_by_target": false,
+                "writes_on_table": [
+                  "tpch_touch_lineitem"
+                ],
+                "target_cost_after": 201304.994,
+                "target_cost_before": 201304.994
+              },
+              "label": null,
+              "reason": null,
+              "target": null,
+              "guardrail": null
+            }
+          ]
+        }
+      ],
+      "observed_ratio": {
+        "tpch_customer_recent_orders": 0.918,
+        "tpch_order_lines": 0.979,
+        "tpch_order_lookup": 0.994,
+        "tpch_q14_promotion_effect": 1.471,
+        "tpch_q3_shipping_priority": 0.953,
+        "tpch_q4_order_priority": 0.765,
+        "tpch_q6_forecast_revenue": 1.041,
+        "tpch_touch_lineitem": 1.082
+      },
+      "seconds": 73.6
+    }
+  ]
+}
