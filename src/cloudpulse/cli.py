@@ -52,7 +52,7 @@ def cmd_evaluate(args) -> None:
     from cloudpulse.evaluation import run_all
     out = run_all(load_settings(), args.scenario, args.scale, args.seed,
                   baseline_rounds=args.baseline_rounds, fault_rounds=args.fault_rounds,
-                  reset_meta=not args.keep_meta, label=args.label)
+                  reset_meta=not args.keep_meta, label=args.label, pack=args.pack)
     print((out / "summary.md").read_text())
     print(f"results in {out}")
 
@@ -116,6 +116,8 @@ def main(argv: list[str] | None = None) -> None:
     s.add_argument("--keep-meta", action="store_true",
                    help="append to the evidence database instead of resetting it")
     s.add_argument("--label", help="suffix for the results directory (e.g. supplementary)")
+    s.add_argument("--pack", default="ecommerce", choices=["ecommerce", "tpch"],
+                   help="workload pack: synthetic e-commerce or the TPC-H benchmark")
     s.set_defaults(fn=cmd_evaluate)
 
     s = sub.add_parser("similarity-benchmark")

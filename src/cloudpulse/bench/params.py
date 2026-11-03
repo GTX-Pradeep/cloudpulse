@@ -91,6 +91,13 @@ def sample(spec: dict[str, Any], dsn: str, seed: int) -> Params:
         return customer_mix(dsn, n, seed)
     if kind == "order_ids":
         return order_ids(dsn, n, seed)
+    if kind == "sql":
+        # generic, deterministic: setseed() then a query that uses random();
+        # used by packs whose parameters are defined by a specification (TPC-H)
+        with db.connect(dsn) as conn, conn.cursor() as cur:
+            cur.execute("SELECT setseed(%s)", ((seed % 1_000_003) / 1_000_003.0,))
+            cur.execute(spec["query"], {"n": n})
+            return [tuple(r) for r in cur.fetchall()]
     if kind == "union":
         # a regular sample plus values that must be covered: explicit ones (e.g.
         # parameters for which HypoPG predicts a plan change) and/or other samplers

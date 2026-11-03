@@ -24,18 +24,12 @@ from pathlib import Path
 from cloudpulse import db, pipeline
 from cloudpulse.bench import env as envmod
 from cloudpulse.config import REPO_ROOT, Settings
-from cloudpulse.datagen import generate
 from cloudpulse.jobs import queue, worker
 from cloudpulse.meta import store
 from cloudpulse.telemetry import collector, detector
+from cloudpulse.workload import packs
 from cloudpulse.workload.generator import NoisyNeighbor, WorkloadRunner
-from cloudpulse.workload.suite import (
-    BASELINE_DB_SETTINGS,
-    BASELINE_SQL,
-    SCENARIOS,
-    WORKLOAD,
-    Scenario,
-)
+from cloudpulse.workload.pack import Pack, Scenario
 
 TEMPLATE_DB = "cp_target_template"
 
@@ -62,29 +56,35 @@ def _admin(target_dsn: str) -> str:
     return db.with_database(target_dsn, "postgres")
 
 
-def build_target_template(settings: Settings, scale: str, seed: int, log=print) -> None:
+def template_db(pack: Pack) -> str:
+    return TEMPLATE_DB if pack.name == "ecommerce" else f"{TEMPLATE_DB}_{pack.name}"
+
+
+def build_target_template(settings: Settings, scale: str, seed: int, pack: Pack, log=print) -> None:
     admin = _admin(settings.target_dsn)
-    if db.database_exists(admin, TEMPLATE_DB):
-        dsn = db.with_database(admin, TEMPLATE_DB)
+    tdb = template_db(pack)
+    if db.database_exists(admin, tdb):
+        dsn = db.with_database(admin, tdb)
         with db.cursor(dsn) as cur:
             cur.execute("SELECT value FROM cloudpulse_dataset WHERE key IN ('name','seed') ORDER BY key")
             vals = [r[0] for r in cur.fetchall()]
         if vals == [scale, str(seed)]:
             return
-    log(f"building target template (scale={scale}, seed={seed})")
-    dsn = generate.build_database(admin, TEMPLATE_DB, generate.SCALES[scale], seed)
+    log(f"building target template (pack={pack.name}, scale={scale}, seed={seed})")
+    dsn = pack.build(admin, tdb, scale, seed)
     with db.cursor(dsn) as cur:
-        for stmt in BASELINE_SQL:
+        for stmt in pack.baseline_sql:
             cur.execute(stmt)
 
 
-def reset_target(settings: Settings) -> None:
+def reset_target(settings: Settings, pack: Pack) -> None:
     admin = _admin(settings.target_dsn)
     name = settings.target_dsn.rsplit("/", 1)[-1].split("?")[0]
     db.drop_database(admin, name)
-    db.create_database(admin, name, template=TEMPLATE_DB)
+    db.create_database(admin, name, template=template_db(pack))
     with db.cursor(admin) as cur:
-        for k, v in BASELINE_DB_SETTINGS.items():
+        cur.execute(f"ALTER DATABASE {db.check_ident(name)} RESET ALL")
+        for k, v in pack.baseline_db_settings.items():
             cur.execute(f"ALTER DATABASE {db.check_ident(name)} SET {db.check_ident(k)} = '{v}'")
     with db.cursor(settings.target_dsn) as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS pg_stat_statements")
@@ -92,7 +92,7 @@ def reset_target(settings: Settings) -> None:
         cur.execute("SELECT pg_stat_statements_reset()")
 
 
-def inject(settings: Settings, sc: Scenario) -> NoisyNeighbor | None:
+def inject(settings: Settings, sc: Scenario, pack: Pack) -> NoisyNeighbor | None:
     name = settings.target_dsn.rsplit("/", 1)[-1].split("?")[0]
     with db.cursor(settings.target_dsn) as cur:
         for stmt in sc.fault_sql:
@@ -101,7 +101,7 @@ def inject(settings: Settings, sc: Scenario) -> NoisyNeighbor | None:
         for k, v in sc.fault_db_settings.items():
             cur.execute(f"ALTER DATABASE {db.check_ident(name)} SET {db.check_ident(k)} = '{v}'")
     if sc.noisy_neighbor:
-        nn = NoisyNeighbor(settings.target_dsn)
+        nn = NoisyNeighbor(settings.target_dsn, sql=pack.noisy_sql)
         nn.start()
         return nn
     return None
@@ -143,14 +143,15 @@ def observed_ratios(meta_dsn: str, query_pks: dict[str, int], fault_rounds: int)
 def run_scenario(
     settings: Settings, sc: Scenario, scale: str, seed: int,
     baseline_rounds: int = 14, fault_rounds: int = 8, workload_scale: float = 0.5,
-    max_investigations: int = 3, log=print,
+    max_investigations: int = 3, pack: Pack | None = None, log=print,
 ) -> ScenarioResult:
+    pack = pack or packs.get("ecommerce")
     t0 = time.time()
     cfg = detector.DetectorConfig()
     log(f"=== {sc.name}: {sc.title}")
-    reset_target(settings)
-    qids = collector.template_queryids(settings.target_dsn, WORKLOAD)
-    runner = WorkloadRunner(settings.target_dsn, WORKLOAD, scale=workload_scale)
+    reset_target(settings, pack)
+    qids = collector.template_queryids(settings.target_dsn, pack.workload)
+    runner = WorkloadRunner(settings.target_dsn, pack.workload, scale=workload_scale)
     collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
     runner.run_round()
     collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
@@ -162,7 +163,7 @@ def run_scenario(
         collector.take_snapshot(settings.target_dsn, settings.meta_dsn, qids)
         baseline_fp |= set(_flagged(settings, cfg))
 
-    nn = inject(settings, sc)
+    nn = inject(settings, sc, pack)
     log(f"[{sc.name}] fault injected")
     try:
         for _ in range(fault_rounds):
@@ -181,8 +182,8 @@ def run_scenario(
         "SELECT i.id, q.template_name FROM performance_incidents i JOIN queries q ON q.id = i.query_id "
         "WHERE i.id = ANY(%s)", (opened,))
     inc_rows.sort(key=lambda r: (r["template_name"] != sc.regressed_query, r["id"]))
-    lab_state = pipeline.LabState(scale, seed, BASELINE_SQL + sc.fault_sql,
-                                  {**BASELINE_DB_SETTINGS, **sc.fault_db_settings})
+    lab_state = pipeline.LabState(scale, seed, pack.baseline_sql + sc.fault_sql,
+                                  {**pack.baseline_db_settings, **sc.fault_db_settings}, pack.name)
     for r in inc_rows[:max_investigations]:
         queue.enqueue(settings.meta_dsn, "investigate",
                       {"incident_id": r["id"], "lab_state": lab_state.to_dict()})
@@ -226,16 +227,17 @@ def run_scenario(
 
 def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
             out_root: Path | None = None, log=print, reset_meta: bool = True,
-            label: str | None = None, **kw) -> Path:
+            label: str | None = None, pack: str = "ecommerce", **kw) -> Path:
+    p = packs.get(pack)
     store.init_schema(settings.meta_dsn, reset=reset_meta)
-    build_target_template(settings, scale, seed, log=log)
+    build_target_template(settings, scale, seed, p, log=log)
     out_root = out_root or (REPO_ROOT / "results" / "evaluation")
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out = out_root / (f"{stamp}_{label}" if label else stamp)
     out.mkdir(parents=True)
     results = []
-    for name in names or list(SCENARIOS):
-        r = run_scenario(settings, SCENARIOS[name], scale, seed, log=log, **kw)
+    for name in names or list(p.scenarios):
+        r = run_scenario(settings, p.scenarios[name], scale, seed, pack=p, log=log, **kw)
         results.append(r)
         (out / "scenarios.json").write_text(json.dumps([asdict(x) for x in results], indent=2,
                                                        default=str))
@@ -244,7 +246,7 @@ def run_all(settings: Settings, names: list[str] | None, scale: str, seed: int,
     summary = {
         "environment": envmod.capture(settings.target_dsn, settings.env_label),
         "scale": scale, "seed": seed, "detector": asdict(detector.DetectorConfig()),
-        "label": label, "protocol": kw, "delay_offset_corrected": True,
+        "label": label, "protocol": kw, "delay_offset_corrected": True, "pack": pack,
         "scenarios": [asdict(x) for x in results],
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

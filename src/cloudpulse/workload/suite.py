@@ -1,4 +1,4 @@
-"""The tracked workload and the ground-truth regression scenarios.
+"""The e-commerce workload pack: tracked workload and ground-truth scenarios.
 
 The *tracked workload* is the set of query templates an application runs, with
 a parameter sampler and a relative frequency (weight) for each. CloudPulse uses
@@ -13,9 +13,9 @@ decides that, and the evaluation reports what actually happened.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 from cloudpulse.bench.spec import QuerySpec
+from cloudpulse.datagen import generate
+from cloudpulse.workload.pack import Pack, Scenario
 
 WORKLOAD: list[QuerySpec] = [
     QuerySpec(
@@ -97,19 +97,6 @@ BACKORDER_SQL = (
 )
 
 
-@dataclass
-class Scenario:
-    name: str
-    title: str
-    fault_sql: list[str] = field(default_factory=list)
-    fault_db_settings: dict[str, str] = field(default_factory=dict)
-    noisy_neighbor: bool = False
-    regressed_query: str | None = None
-    expected_diagnosis: str | None = None  # diagnosis rule that should explain it
-    expected_candidate: str | None = None  # substring of the right candidate
-    story: str = ""
-
-
 SCENARIOS: dict[str, Scenario] = {
     s.name: s
     for s in [
@@ -173,3 +160,26 @@ SCENARIOS: dict[str, Scenario] = {
         ),
     ]
 }
+
+
+def _code_fingerprint() -> str:
+    return generate.load_schema_sql() + generate.GENERATE_CUSTOMERS + generate.GENERATE_ORDERS
+
+
+def _build(admin_dsn: str, dbname: str, scale: str, seed: int) -> str:
+    return generate.build_database(admin_dsn, dbname, generate.SCALES[scale], seed)
+
+
+ECOMMERCE = Pack(
+    name="ecommerce",
+    workload=WORKLOAD,
+    baseline_sql=BASELINE_SQL,
+    baseline_db_settings=BASELINE_DB_SETTINGS,
+    scenarios=SCENARIOS,
+    tables=["customers", "orders"],
+    scales=list(generate.SCALES),
+    build=_build,
+    fingerprint=generate.fingerprint,
+    code_fingerprint=_code_fingerprint,
+    noisy_sql="SELECT sum(hashtext(o::text)) FROM orders o",
+)

@@ -54,6 +54,7 @@ class ExperimentSpec:
     arm_b: ArmSpec
     protocol: Protocol = field(default_factory=Protocol)
     target_query: str | None = None  # name of the query the candidate is meant to fix
+    pack: str = "ecommerce"  # which workload pack builds the lab base database
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> ExperimentSpec:
@@ -68,6 +69,7 @@ class ExperimentSpec:
             arm_b=ArmSpec(**{"name": "B", **d.get("arm_b", {})}),
             protocol=Protocol(**d.get("protocol", {})),
             target_query=d.get("target_query"),
+            pack=d.get("pack", "ecommerce"),
         )
 
     @staticmethod

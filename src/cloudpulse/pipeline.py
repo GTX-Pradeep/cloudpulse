@@ -24,8 +24,7 @@ from cloudpulse.diagnosis import hypo, rules
 from cloudpulse.meta import store
 from cloudpulse.plans import features, tree
 from cloudpulse.telemetry import collector, detector
-from cloudpulse.workload import guardrail
-from cloudpulse.workload.suite import BY_NAME, WORKLOAD
+from cloudpulse.workload import guardrail, packs
 
 PLAN_CAPTURE_PARAMS = 5
 PLAN_CAPTURE_TIMEOUT_MS = 60_000
@@ -43,6 +42,7 @@ class LabState:
     seed: int
     sql: list[str] = field(default_factory=list)
     db_settings: dict[str, str] = field(default_factory=dict)
+    pack: str = "ecommerce"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -55,7 +55,7 @@ def capture_baseline_plans(settings: Settings, query_pks: dict[str, int]) -> Non
     """Record the estimate-only plan shape of each tracked template while healthy."""
     with db.connect(settings.target_dsn) as conn, conn.cursor() as cur:
         for name, qpk in query_pks.items():
-            q = BY_NAME[name]
+            q = packs.template(name)
             p = paramsmod.sample({**q.params, "n": 1}, settings.target_dsn, 0)[0]
             cur.execute("EXPLAIN (FORMAT JSON) " + q.sql, p)
             plan = cur.fetchone()[0]
@@ -177,7 +177,8 @@ def investigate(settings: Settings, incident_id: int, lab_state: LabState, log=p
         settings.meta_dsn,
         "SELECT i.*, q.template_name, q.id AS qpk FROM performance_incidents i "
         "JOIN queries q ON q.id = i.query_id WHERE i.id = %s", (incident_id,))
-    q = BY_NAME[inc["template_name"]]
+    q = packs.template(inc["template_name"])
+    workload = packs.get(lab_state.pack).workload
     store.execute(settings.meta_dsn, "DELETE FROM diagnoses WHERE incident_id = %s", (incident_id,))
     store.execute(settings.meta_dsn, "DELETE FROM candidates WHERE incident_id = %s", (incident_id,))
     store.execute(settings.meta_dsn, "DELETE FROM execution_plans WHERE incident_id = %s", (incident_id,))
@@ -230,14 +231,15 @@ def investigate(settings: Settings, incident_id: int, lab_state: LabState, log=p
             status = "queued"
             if c.kind == "index":
                 if base_db is None:
-                    base_db = harness.ensure_base(lab, lab_state.scale, lab_state.seed, lab_state.sql)
+                    base_db = harness.ensure_base(lab, lab_state.scale, lab_state.seed, lab_state.sql,
+                                                  pack=lab_state.pack)
                 bdsn = db.with_database(lab, base_db)
                 # random sample + heavy hitters: plan flips concentrate on heavy values (F-9)
                 wl_params = {w.name: paramsmod.sample(w.params, bdsn, 5)[:hypo.MAX_PARAMS]
                              + paramsmod.heavy_hitters(w.params, bdsn)
-                             for w in WORKLOAD if w.kind == "read"}
+                             for w in workload if w.kind == "read"}
                 res = hypo.what_if(bdsn, c.setup_sql[0], c.table, q,
-                                   paramsmod.sample(q.params, bdsn, 5), WORKLOAD, wl_params)
+                                   paramsmod.sample(q.params, bdsn, 5), workload, wl_params)
                 hypo_res = res.to_dict()
                 if not res.used_by_target:
                     status = "filtered_out"
@@ -269,7 +271,7 @@ def guardrail_queries(cand: dict, target: QuerySpec) -> list[QuerySpec]:
         for n in names:
             if n == target.name:
                 continue
-            q = _cap(BY_NAME[n])
+            q = _cap(packs.template(n))
             if changed.get(n):
                 # F-7: always benchmark the parameter values whose plan changes
                 q = QuerySpec(q.name, q.sql, q.kind,
@@ -279,7 +281,7 @@ def guardrail_queries(cand: dict, target: QuerySpec) -> list[QuerySpec]:
         return out
     if cand["kind"] == "analyze":
         table = cand["description"].split()[-1]
-        return [w for w in WORKLOAD
+        return [w for w in packs.pack_of_template(target.name).workload
                 if w.kind == "read" and w.name != target.name and f" {table} " in f" {w.sql} "]
     return []  # session-scoped setting: only the target query's session is affected
 
@@ -295,7 +297,7 @@ def build_candidate_spec(
     cand: dict, lab_state: LabState, protocol: Protocol, name: str
 ) -> tuple[ExperimentSpec, QuerySpec, list[QuerySpec]]:
     """Turn a stored candidate into an A/B experiment: target query + guardrail."""
-    target = _cap(BY_NAME[cand["template_name"]])
+    target = _cap(packs.template(cand["template_name"]))
     guard = [g if g.params.get("type") == "union" else _cap(g)
              for g in guardrail_queries(cand, target)]
     spec = ExperimentSpec(
@@ -305,7 +307,7 @@ def build_candidate_spec(
         queries=[target, *guard],
         arm_a=ArmSpec("A", [], dict(lab_state.db_settings)),
         arm_b=ArmSpec("B", list(cand["setup_sql"]), {**lab_state.db_settings, **cand["session"]}),
-        protocol=protocol, target_query=target.name,
+        protocol=protocol, target_query=target.name, pack=lab_state.pack,
     )
     return spec, target, guard
 

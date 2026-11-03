@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from cloudpulse.meta import store
 from cloudpulse.similarity import features as sf
-from cloudpulse.workload.suite import BY_NAME
+from cloudpulse.workload import packs
 
 
 def _vec_literal(v: list[float]) -> str:
@@ -25,7 +25,10 @@ def index_incident(meta_dsn: str, incident_id: int) -> dict | None:
         "WHERE i.id = %s", (incident_id,))
     if row is None:
         return None
-    sql = BY_NAME[row["template_name"]].sql if row["template_name"] in BY_NAME else row["query_text"]
+    try:
+        sql = packs.template(row["template_name"]).sql
+    except KeyError:
+        sql = row["query_text"]
     feats = sf.sql_features(sql)
     if row["plan"]:
         from cloudpulse.plans import tree

@@ -20,14 +20,13 @@ from cloudpulse.bench.harness import run_experiment
 from cloudpulse.bench.spec import Protocol
 from cloudpulse.config import REPO_ROOT, Settings
 from cloudpulse.meta import store
-from cloudpulse.workload import guardrail
-from cloudpulse.workload.suite import BASELINE_DB_SETTINGS, BASELINE_SQL, SCENARIOS
+from cloudpulse.workload import guardrail, packs
 
 
 def lab_state_for(scenario: str, scale: str = "default", seed: int = 42) -> pipeline.LabState:
-    sc = SCENARIOS[scenario]
-    return pipeline.LabState(scale, seed, BASELINE_SQL + sc.fault_sql,
-                             {**BASELINE_DB_SETTINGS, **sc.fault_db_settings})
+    p, sc = packs.scenario(scenario)
+    return pipeline.LabState(scale, seed, p.baseline_sql + sc.fault_sql,
+                             {**p.baseline_db_settings, **sc.fault_db_settings}, p.name)
 
 
 def tested_candidates(meta_dsn: str) -> list[dict]:

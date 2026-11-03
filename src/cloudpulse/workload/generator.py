@@ -74,8 +74,9 @@ class NoisyNeighbor:
 
     SQL = "SELECT sum(hashtext(o::text)) FROM orders o"
 
-    def __init__(self, target_dsn: str, threads: int = 2):
+    def __init__(self, target_dsn: str, threads: int = 2, sql: str | None = None):
         self.dsn, self.n = target_dsn, threads
+        self.sql = sql or self.SQL
         self._stop = threading.Event()
         self._threads: list[threading.Thread] = []
 
@@ -83,7 +84,7 @@ class NoisyNeighbor:
         with db.connect(self.dsn) as conn:
             while not self._stop.is_set():
                 with conn.cursor() as cur:
-                    cur.execute(self.SQL)
+                    cur.execute(self.sql)
                     cur.fetchall()
 
     def start(self) -> None:

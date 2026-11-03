@@ -38,7 +38,7 @@ from cloudpulse.bench import env as envmod
 from cloudpulse.bench import params as paramsmod
 from cloudpulse.bench.spec import ArmSpec, ExperimentSpec, QuerySpec
 from cloudpulse.config import REPO_ROOT, Settings
-from cloudpulse.datagen import generate
+from cloudpulse.workload import packs
 
 TWIN_A = "cp_exp_a"
 TWIN_B = "cp_exp_b"
@@ -69,35 +69,37 @@ class RunResult:
 # --------------------------------------------------------------------------- base
 
 
-def base_key(scale: str, seed: int, baseline_sql: list[str]) -> str:
+def base_key(scale: str, seed: int, baseline_sql: list[str], pack: str = "ecommerce") -> str:
     h = hashlib.sha256()
-    h.update(generate.load_schema_sql().encode())
-    h.update(generate.GENERATE_CUSTOMERS.encode())
-    h.update(generate.GENERATE_ORDERS.encode())
+    h.update(packs.get(pack).code_fingerprint().encode())
     h.update(json.dumps([scale, seed, baseline_sql]).encode())
+    if pack != "ecommerce":  # keep existing e-commerce base names stable
+        h.update(pack.encode())
     return h.hexdigest()[:12]
 
 
 def ensure_base(
-    lab_admin_dsn: str, scale: str, seed: int, baseline_sql: list[str], rebuild: bool = False
+    lab_admin_dsn: str, scale: str, seed: int, baseline_sql: list[str], rebuild: bool = False,
+    pack: str = "ecommerce",
 ) -> str:
     """Build (or reuse) the lab base database for a given state. Returns its name.
 
     The base is keyed by a hash of (generator code, scale, seed, state SQL), so a
     changed scenario or generator can never silently reuse a stale base."""
-    key = base_key(scale, seed, baseline_sql)
+    key = base_key(scale, seed, baseline_sql, pack)
+    p = packs.get(pack)
     name = f"cp_base_{key}"
     if not rebuild and db.database_exists(lab_admin_dsn, name):
         with db.cursor(db.with_database(lab_admin_dsn, name)) as cur:
             cur.execute("SELECT value FROM cloudpulse_dataset WHERE key = 'ready'")
             if cur.fetchone():
                 return name
-    dsn = generate.build_database(lab_admin_dsn, name, generate.SCALES[scale], seed)
+    dsn = p.build(lab_admin_dsn, name, scale, seed)
     with db.cursor(dsn) as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS hypopg")
         # Lab databases must not change underneath an experiment (D-008).
-        for table in ("customers", "orders"):
-            cur.execute(f"ALTER TABLE {table} SET (autovacuum_enabled = false)")
+        for table in p.tables:
+            cur.execute(f"ALTER TABLE {db.check_ident(table)} SET (autovacuum_enabled = false)")
         for stmt in baseline_sql:
             cur.execute(stmt)
         cur.execute("CHECKPOINT")
@@ -113,7 +115,8 @@ def _index_report(cur: psycopg.Cursor) -> tuple[int, list[str]]:
         "SELECT coalesce(sum(pg_relation_size(indexrelid)), 0), "
         "coalesce(array_agg(indexrelid::regclass::text ORDER BY 1), '{}') "
         "FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid "
-        "WHERE c.relname IN ('orders', 'customers')"
+        "JOIN pg_namespace n ON n.oid = c.relnamespace "
+        "WHERE n.nspname = 'public' AND c.relname <> 'cloudpulse_dataset'"
     )
     size, names = cur.fetchone()
     return int(size), list(names)
@@ -215,9 +218,10 @@ def run_experiment(
 
 def _run_locked(spec, settings, lab, out_root, rebuild_base, log) -> RunResult:
     proto = spec.protocol
-    base = ensure_base(lab, spec.scale, spec.seed, spec.baseline_sql, rebuild=rebuild_base)
+    base = ensure_base(lab, spec.scale, spec.seed, spec.baseline_sql, rebuild=rebuild_base,
+                       pack=spec.pack)
     base_dsn = db.with_database(lab, base)
-    base_fp = generate.fingerprint(base_dsn)
+    base_fp = packs.get(spec.pack).fingerprint(base_dsn)
     query_params = {
         q.name: paramsmod.sample(q.params, base_dsn, proto.seed + i)
         for i, q in enumerate(spec.queries)

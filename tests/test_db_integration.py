@@ -189,3 +189,24 @@ def test_heavy_hitters_are_the_most_frequent_customers(test_settings):
         cur.execute("SELECT customer_id FROM orders GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 5")
         assert hh == [(r[0],) for r in cur.fetchall()]
     assert pm.heavy_hitters({"type": "order_ids"}, test_settings.target_dsn) == []
+
+
+def test_tpch_pack_builds_and_samples_deterministically(settings):
+    """The TPC-H pack: official generator data loads, and SQL-defined substitution
+    parameters are reproducible for a given seed."""
+    from cloudpulse.bench import params as pm
+    from cloudpulse.workload import packs
+    p = packs.get("tpch")
+    dsn = p.build(settings.lab_dsn, "cp_test_tpch", "tpch-sf0.01", 1)
+    try:
+        fp = p.fingerprint(dsn)
+        assert fp["orders"] == 15000 and fp["lineitem"] > 50000  # TPC-H SF 0.01 sizes
+        q14 = p.by_name["tpch_q14_promotion_effect"]
+        a = pm.sample(q14.params, dsn, 7)
+        assert a == pm.sample(q14.params, dsn, 7) and a != pm.sample(q14.params, dsn, 8)
+        with db.cursor(dsn) as cur:
+            for q in p.workload:
+                if q.kind == "read":
+                    cur.execute("EXPLAIN " + q.sql, pm.sample({**q.params, "n": 1}, dsn, 0)[0])
+    finally:
+        db.drop_database(settings.lab_dsn, "cp_test_tpch")
