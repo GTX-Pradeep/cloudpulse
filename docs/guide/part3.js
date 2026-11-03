@@ -114,6 +114,7 @@ module.exports = () => {
       ["recent_orders_feed", "target", f3(tgt.ratio), `95%: [${f3(tgt.ci_low)}, ${f3(tgt.ci_high)}]`, `${Math.round(tgt.median_us_a).toLocaleString("en-US")} → ${Math.round(tgt.median_us_b)}`, "≥ 5% faster: yes"],
       ...gq.map((g) => [g.query, "guardrail", f3(g.ratio), `${(g.confidence * 100).toFixed(1)}%: [${f2(g.ci_low)}, ${f2(g.ci_high)}]`, `${Math.round(g.median_us_a).toLocaleString("en-US")} → ${Math.round(g.median_us_b).toLocaleString("en-US")}`, g.collateral_regression ? "collateral regression (veto)" : g.ci_low > 1 ? "slower, below veto margin (warning)" : "ok"]),
     ] },
+    { t: "callout", kind: "tip", text: "Look at latest_orders_for_customer: the median execution got slightly *faster*, yet the total time ratio is several times worse. Most customers benefit a little; a few heavy customers become dramatically slower and dominate the total. A median-based comparison would have approved this index. Using the total over the parameter mix, which is what the workload actually pays, is a deliberate design choice (D-010)." },
     { t: "h3", text: "Step 7. Verdict and outcome" },
     { t: "callout", kind: "key", text: `${wc.label}: ${wc.reason}` },
     { t: "p", text: `Incident status: **${wi.status}**: ${wi.outcome}. Nothing was applied to the target; a person reviews this evidence in the UI.` },

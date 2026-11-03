@@ -1,0 +1,75 @@
+{
+  "label": "SUPPORTED",
+  "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster); no collateral regression across 1 guardrail queries",
+  "target": {
+    "label": "SUPPORTED",
+    "reason": "95% CI of time ratio B/A = [0.539, 0.583] lies entirely below 0.95 (>= 5% faster)",
+    "effect": {
+      "query": "tpch_q14_promotion_effect",
+      "n_blocks": 15,
+      "ratio": 0.5618338085174793,
+      "ci_low": 0.5388940852289771,
+      "ci_high": 0.5834525608450791,
+      "confidence": 0.95,
+      "median_us_a": 367763.045,
+      "median_us_b": 211986.51,
+      "block_ratios": [
+        0.5364,
+        0.5543,
+        0.5536,
+        0.5837,
+        0.5651,
+        0.5903,
+        0.64,
+        0.5017,
+        0.6188,
+        0.5947,
+        0.5515,
+        0.5543,
+        0.5669,
+        0.5811,
+        0.46
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -43.82
+    }
+  },
+  "guardrail": [
+    {
+      "query": "tpch_touch_lineitem",
+      "n_blocks": 15,
+      "ratio": 0.9800665427050309,
+      "ci_low": 0.9373660016189103,
+      "ci_high": 1.0165513416903145,
+      "confidence": 0.95,
+      "median_us_a": 94.73,
+      "median_us_b": 94.9,
+      "block_ratios": [
+        0.9127,
+        0.7899,
+        1.0193,
+        0.9932,
+        1.0481,
+        1.0486,
+        1.0474,
+        0.9726,
+        1.0451,
+        0.9802,
+        0.9135,
+        0.8794,
+        1.0659,
+        1.0044,
+        1.0268
+      ],
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "change_pct": -1.99,
+      "weight": 10,
+      "collateral_regression": false
+    }
+  ],
+  "collateral": [],
+  "weighted_change_pct": -43.76,
+  "warnings": []
+}

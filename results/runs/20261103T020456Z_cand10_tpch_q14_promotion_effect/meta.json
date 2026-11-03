@@ -1,0 +1,267 @@
+{
+  "spec": {
+    "name": "cand10_tpch_q14_promotion_effect",
+    "description": "CREATE INDEX ON lineitem (l_shipdate)",
+    "scale": "tpch-sf1",
+    "seed": 42,
+    "baseline_sql": [
+      "CREATE INDEX orders_o_custkey_idx ON orders (o_custkey)",
+      "CREATE INDEX orders_o_orderdate_idx ON orders (o_orderdate)",
+      "CREATE INDEX lineitem_l_shipdate_idx ON lineitem (l_shipdate)",
+      "ANALYZE orders",
+      "ANALYZE lineitem",
+      "DROP INDEX lineitem_l_shipdate_idx"
+    ],
+    "queries": [
+      {
+        "name": "tpch_q14_promotion_effect",
+        "sql": "SELECT 100.00 * sum(CASE WHEN p_type LIKE 'PROMO%%' THEN l_extendedprice * (1 - l_discount) ELSE 0 END) / sum(l_extendedprice * (1 - l_discount)) AS promo_revenue FROM lineitem, part WHERE l_partkey = p_partkey AND l_shipdate >= %s::date AND l_shipdate < %s::date + interval '1 month'",
+        "kind": "read",
+        "params": {
+          "type": "sql",
+          "n": 12,
+          "query": "SELECT d, d FROM (SELECT (date '1993-01-01' + make_interval(months => floor(random() * 60)::int))::date AS d FROM generate_series(1, %(n)s)) s"
+        },
+        "weight": 2,
+        "compare_results": true
+      },
+      {
+        "name": "tpch_touch_lineitem",
+        "sql": "UPDATE lineitem SET l_comment = l_comment WHERE l_orderkey = %s AND l_linenumber = 1",
+        "kind": "write",
+        "params": {
+          "type": "sql",
+          "n": 20,
+          "query": "SELECT o_orderkey FROM orders ORDER BY random() LIMIT %(n)s"
+        },
+        "weight": 10,
+        "compare_results": true
+      }
+    ],
+    "arm_a": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "arm_b": {
+      "name": "B",
+      "setup_sql": [
+        "CREATE INDEX cp_lineitem_l_shipdate_idx ON lineitem (l_shipdate)"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "protocol": {
+      "blocks": 15,
+      "warmup_rounds": 1,
+      "seed": 4242,
+      "statement_timeout_ms": 60000,
+      "lab_session": {
+        "synchronous_commit": "off"
+      }
+    },
+    "target_query": "tpch_q14_promotion_effect",
+    "pack": "tpch"
+  },
+  "environment": {
+    "captured_at_utc": "2026-11-03T02:04:56+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "09e342d-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v230",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "hypopg": "1.4.0",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "base_database": "cp_base_cc7fc8193dc9",
+  "base_fingerprint": {
+    "lineitem": 6001215,
+    "lineitem_sum": "229577310901.20",
+    "orders": 1500000,
+    "orders_sum": "226829306447.46"
+  },
+  "arms": {
+    "A": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.006,
+      "index_bytes": 272662528,
+      "indexes": [
+        "region_pkey",
+        "nation_pkey",
+        "supplier_pkey",
+        "part_pkey",
+        "partsupp_pkey",
+        "customer_pkey",
+        "orders_pkey",
+        "lineitem_pkey",
+        "orders_o_custkey_idx",
+        "orders_o_orderdate_idx"
+      ]
+    },
+    "B": {
+      "name": "B",
+      "setup_sql": [
+        "CREATE INDEX cp_lineitem_l_shipdate_idx ON lineitem (l_shipdate)"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 3.144,
+      "index_bytes": 315359232,
+      "indexes": [
+        "region_pkey",
+        "nation_pkey",
+        "supplier_pkey",
+        "part_pkey",
+        "partsupp_pkey",
+        "customer_pkey",
+        "orders_pkey",
+        "lineitem_pkey",
+        "orders_o_custkey_idx",
+        "orders_o_orderdate_idx",
+        "cp_lineitem_l_shipdate_idx"
+      ]
+    }
+  },
+  "params": {
+    "tpch_q14_promotion_effect": [
+      [
+        "1995-05-01",
+        "1995-05-01"
+      ],
+      [
+        "1997-04-01",
+        "1997-04-01"
+      ],
+      [
+        "1997-12-01",
+        "1997-12-01"
+      ],
+      [
+        "1993-02-01",
+        "1993-02-01"
+      ],
+      [
+        "1996-02-01",
+        "1996-02-01"
+      ],
+      [
+        "1997-05-01",
+        "1997-05-01"
+      ],
+      [
+        "1996-10-01",
+        "1996-10-01"
+      ],
+      [
+        "1997-12-01",
+        "1997-12-01"
+      ],
+      [
+        "1996-04-01",
+        "1996-04-01"
+      ],
+      [
+        "1994-11-01",
+        "1994-11-01"
+      ],
+      [
+        "1994-11-01",
+        "1994-11-01"
+      ],
+      [
+        "1993-10-01",
+        "1993-10-01"
+      ]
+    ],
+    "tpch_touch_lineitem": [
+      [
+        "1435109"
+      ],
+      [
+        "3100517"
+      ],
+      [
+        "2194085"
+      ],
+      [
+        "535013"
+      ],
+      [
+        "1947143"
+      ],
+      [
+        "1267072"
+      ],
+      [
+        "4726116"
+      ],
+      [
+        "4091943"
+      ],
+      [
+        "4434273"
+      ],
+      [
+        "4081668"
+      ],
+      [
+        "70466"
+      ],
+      [
+        "3201249"
+      ],
+      [
+        "1002663"
+      ],
+      [
+        "1540803"
+      ],
+      [
+        "3232354"
+      ],
+      [
+        "3181184"
+      ],
+      [
+        "427237"
+      ],
+      [
+        "606529"
+      ],
+      [
+        "1345504"
+      ],
+      [
+        "2471074"
+      ]
+    ]
+  }
+}
