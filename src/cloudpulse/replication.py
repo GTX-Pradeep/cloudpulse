@@ -76,11 +76,35 @@ def replicate(settings: Settings, repeats: int = 3, log=print) -> Path:
             "agrees_with_original": labels.get(cand["original_label"], 0),
         })
         (out / "summary.json").write_text(json.dumps(report, indent=2, default=str))
+    for c in report:
+        c["stability"] = consolidate(c)
     summary = {"environment": envmod.capture(settings.lab_dsn, settings.env_label),
                "repeats": repeats, "candidates": report}
     (out / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     (out / "summary.md").write_text(render(summary))
     return out
+
+
+def consolidate(c: dict) -> dict:
+    """Stability verdict over the original run plus its replications (D-023).
+
+    A verdict that flips between runs is reported as UNSTABLE rather than picking
+    a side: the effect sits near a decision margin, and a person should decide."""
+    labels = [c["original_label"]] + [r["label"] for r in c["replications"]]
+    counts = Counter(labels)
+    stable = len(counts) == 1
+    return {"runs": len(labels), "counts": dict(counts), "stable": stable,
+            "consolidated": labels[0] if stable else "UNSTABLE"}
+
+
+def finalize(out_dir: Path) -> dict:
+    """Add the consolidated verdicts to a finished replication and re-render it."""
+    summary = json.loads((out_dir / "summary.json").read_text())
+    for c in summary["candidates"]:
+        c["stability"] = consolidate(c)
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (out_dir / "summary.md").write_text(render(summary))
+    return summary
 
 
 def render(summary: dict) -> str:
@@ -90,9 +114,9 @@ def render(summary: dict) -> str:
         f"- Environment: **{env['env_label']}** | PostgreSQL {env['postgres'].get('server_version')} "
         f"| git {env['git_commit']}",
         f"- Each candidate re-run {summary['repeats']} times with fresh twins and new shuffle seeds.", "",
-        "| Scenario | Candidate | Original verdict | Replications | Target time ratio per run "
-        "| Collateral per run |",
-        "|---|---|---|---|---|---|",
+        "| Scenario | Candidate | Original verdict | Replications | Consolidated | "
+        "Target time ratio per run | Collateral per run |",
+        "|---|---|---|---|---|---|---|",
     ]
     for c in summary["candidates"]:
         reps = c["replications"]
@@ -101,6 +125,8 @@ def render(summary: dict) -> str:
         coll = "; ".join(
             ", ".join(f"{g['query']} {g['ratio']:.2f}×" for g in x["guardrail"] if g["collateral_regression"])
             or "none" for x in reps)
+        stab = c.get("stability") or consolidate(c)
         lines.append(f"| {c['scenario']} | `{c['candidate']}` | {c['original_label']} "
-                     f"({c['original_ratio']:.3f}) | {labels} | {ratios} | {coll} |")
+                     f"({c['original_ratio']:.3f}) | {labels} | **{stab['consolidated']}** | "
+                     f"{ratios} | {coll} |")
     return "\n".join(lines) + "\n"

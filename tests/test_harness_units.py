@@ -103,3 +103,12 @@ def test_union_sampler_combines_samplers():
     spec = {"type": "union", "base": {"type": "values", "values": [[1]]},
             "also": [{"type": "values", "values": [[1], [5]]}]}
     assert pm.sample(spec, "unused", 0) == [(1,), (5,)]
+
+
+def test_replication_consolidation():
+    from cloudpulse.replication import consolidate
+    same = {"original_label": "SUPPORTED", "replications": [{"label": "SUPPORTED"}] * 3}
+    flip = {"original_label": "REJECTED", "replications": [{"label": "SUPPORTED"}] * 3}
+    assert consolidate(same)["consolidated"] == "SUPPORTED" and consolidate(same)["stable"]
+    assert consolidate(flip) == {"runs": 4, "counts": {"REJECTED": 1, "SUPPORTED": 3},
+                                 "stable": False, "consolidated": "UNSTABLE"}

@@ -1,0 +1,532 @@
+{
+  "spec": {
+    "name": "rep2_cand7_segment_revenue_for_status",
+    "description": "ANALYZE orders",
+    "scale": "default",
+    "seed": 42,
+    "baseline_sql": [
+      "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+      "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+      "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+      "ANALYZE orders",
+      "ALTER TABLE orders SET (autovacuum_enabled = false)",
+      "INSERT INTO orders (id, customer_id, status, amount, created_at, updated_at) SELECT m.max_id + g, 1 + (g::bigint * 7919) % m.n_customers, 'backordered', 10, timestamptz '2025-12-20' + g * interval '1 second', timestamptz '2025-12-20' + g * interval '1 second' FROM (SELECT (SELECT max(id) FROM orders) AS max_id,              (SELECT count(*) FROM customers) AS n_customers) m, generate_series(1, 300000) g"
+    ],
+    "queries": [
+      {
+        "name": "segment_revenue_for_status",
+        "sql": "SELECT c.segment, count(*), sum(o.amount) FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = %s GROUP BY c.segment",
+        "kind": "read",
+        "params": {
+          "type": "values",
+          "values": [
+            [
+              "backordered"
+            ],
+            [
+              "returned"
+            ],
+            [
+              "cancelled"
+            ]
+          ]
+        },
+        "weight": 1,
+        "compare_results": true
+      },
+      {
+        "name": "orders_by_customer",
+        "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s",
+        "kind": "read",
+        "params": {
+          "type": "customer_mix",
+          "n": 20
+        },
+        "weight": 30,
+        "compare_results": true
+      },
+      {
+        "name": "latest_orders_for_customer",
+        "sql": "SELECT id, amount, created_at FROM orders WHERE customer_id = %s ORDER BY created_at DESC LIMIT 10",
+        "kind": "read",
+        "params": {
+          "type": "customer_mix",
+          "n": 20
+        },
+        "weight": 20,
+        "compare_results": true
+      },
+      {
+        "name": "recent_orders_feed",
+        "sql": "SELECT id, customer_id, amount FROM orders WHERE created_at > %s ORDER BY created_at DESC LIMIT 50",
+        "kind": "read",
+        "params": {
+          "type": "hours_before_end",
+          "n": 20,
+          "max_hours": 48
+        },
+        "weight": 5,
+        "compare_results": true
+      },
+      {
+        "name": "order_by_id",
+        "sql": "SELECT id, customer_id, status, amount, created_at FROM orders WHERE id = %s",
+        "kind": "read",
+        "params": {
+          "type": "order_ids",
+          "n": 20
+        },
+        "weight": 30,
+        "compare_results": true
+      },
+      {
+        "name": "monthly_revenue_top_customers",
+        "sql": "SELECT customer_id, date_trunc('month', created_at) AS month, sum(amount) AS revenue, count(*) AS n FROM orders WHERE created_at >= '2025-01-01' AND created_at < '2026-01-01' GROUP BY 1, 2 ORDER BY revenue DESC LIMIT 20",
+        "kind": "read",
+        "params": {
+          "type": "none",
+          "n": 1
+        },
+        "weight": 0.2,
+        "compare_results": true
+      },
+      {
+        "name": "recently_updated_orders",
+        "sql": "SELECT id, status, updated_at FROM orders WHERE updated_at > %s ORDER BY updated_at DESC LIMIT 100",
+        "kind": "read",
+        "params": {
+          "type": "hours_before_end",
+          "n": 20,
+          "max_hours": 24
+        },
+        "weight": 2,
+        "compare_results": false
+      }
+    ],
+    "arm_a": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "arm_b": {
+      "name": "B",
+      "setup_sql": [
+        "ANALYZE orders"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "protocol": {
+      "blocks": 15,
+      "warmup_rounds": 1,
+      "seed": 9034,
+      "statement_timeout_ms": 60000,
+      "lab_session": {
+        "synchronous_commit": "off"
+      }
+    },
+    "target_query": "segment_revenue_for_status"
+  },
+  "environment": {
+    "captured_at_utc": "2026-11-03T01:54:11+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "ba2df76-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v230",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "hypopg": "1.4.0",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "base_database": "cp_base_2c9493fc0229",
+  "base_fingerprint": {
+    "customers": 100000,
+    "customers_hash": "279244885607021745094",
+    "orders": 2300000,
+    "orders_hash": "71876062420054980053"
+  },
+  "arms": {
+    "A": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.004,
+      "index_bytes": 193257472,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    },
+    "B": {
+      "name": "B",
+      "setup_sql": [
+        "ANALYZE orders"
+      ],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.134,
+      "index_bytes": 193257472,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    }
+  },
+  "params": {
+    "segment_revenue_for_status": [
+      [
+        "backordered"
+      ],
+      [
+        "returned"
+      ],
+      [
+        "cancelled"
+      ]
+    ],
+    "orders_by_customer": [
+      [
+        "23"
+      ],
+      [
+        "750"
+      ],
+      [
+        "64"
+      ],
+      [
+        "680"
+      ],
+      [
+        "9691"
+      ],
+      [
+        "35072"
+      ],
+      [
+        "11324"
+      ],
+      [
+        "10794"
+      ],
+      [
+        "45478"
+      ],
+      [
+        "28641"
+      ],
+      [
+        "21520"
+      ],
+      [
+        "29135"
+      ],
+      [
+        "38001"
+      ],
+      [
+        "70431"
+      ],
+      [
+        "98555"
+      ],
+      [
+        "90394"
+      ],
+      [
+        "79308"
+      ],
+      [
+        "75322"
+      ],
+      [
+        "67518"
+      ],
+      [
+        "43172"
+      ]
+    ],
+    "latest_orders_for_customer": [
+      [
+        "662"
+      ],
+      [
+        "554"
+      ],
+      [
+        "310"
+      ],
+      [
+        "823"
+      ],
+      [
+        "31587"
+      ],
+      [
+        "1722"
+      ],
+      [
+        "2741"
+      ],
+      [
+        "3730"
+      ],
+      [
+        "33375"
+      ],
+      [
+        "28609"
+      ],
+      [
+        "20115"
+      ],
+      [
+        "20361"
+      ],
+      [
+        "55094"
+      ],
+      [
+        "54290"
+      ],
+      [
+        "85107"
+      ],
+      [
+        "88185"
+      ],
+      [
+        "89811"
+      ],
+      [
+        "58693"
+      ],
+      [
+        "85112"
+      ],
+      [
+        "83843"
+      ]
+    ],
+    "recent_orders_feed": [
+      [
+        "2025-12-30 19:12:02.008806+00:00"
+      ],
+      [
+        "2025-12-30 11:54:59.977406+00:00"
+      ],
+      [
+        "2025-12-30 10:15:47.048355+00:00"
+      ],
+      [
+        "2025-12-31 20:47:16.867796+00:00"
+      ],
+      [
+        "2025-12-30 00:50:28.778468+00:00"
+      ],
+      [
+        "2025-12-30 11:12:32.750446+00:00"
+      ],
+      [
+        "2025-12-31 16:20:36.386635+00:00"
+      ],
+      [
+        "2025-12-30 07:09:39.713865+00:00"
+      ],
+      [
+        "2025-12-31 14:01:39.412621+00:00"
+      ],
+      [
+        "2025-12-30 16:34:34.172211+00:00"
+      ],
+      [
+        "2025-12-31 08:57:31.495873+00:00"
+      ],
+      [
+        "2025-12-31 09:42:57.775304+00:00"
+      ],
+      [
+        "2025-12-31 17:25:57.597966+00:00"
+      ],
+      [
+        "2025-12-31 20:51:05.107838+00:00"
+      ],
+      [
+        "2025-12-31 12:31:01.898290+00:00"
+      ],
+      [
+        "2025-12-30 11:47:29.495067+00:00"
+      ],
+      [
+        "2025-12-30 12:20:03.453927+00:00"
+      ],
+      [
+        "2025-12-30 17:39:32.512000+00:00"
+      ],
+      [
+        "2025-12-31 12:52:42.802414+00:00"
+      ],
+      [
+        "2025-12-31 07:43:13.919739+00:00"
+      ]
+    ],
+    "order_by_id": [
+      [
+        "1422703"
+      ],
+      [
+        "110619"
+      ],
+      [
+        "748159"
+      ],
+      [
+        "118474"
+      ],
+      [
+        "2115381"
+      ],
+      [
+        "369021"
+      ],
+      [
+        "1139696"
+      ],
+      [
+        "649702"
+      ],
+      [
+        "338165"
+      ],
+      [
+        "367695"
+      ],
+      [
+        "1898790"
+      ],
+      [
+        "1276918"
+      ],
+      [
+        "1468901"
+      ],
+      [
+        "330980"
+      ],
+      [
+        "732531"
+      ],
+      [
+        "1531979"
+      ],
+      [
+        "953034"
+      ],
+      [
+        "507624"
+      ],
+      [
+        "1347021"
+      ],
+      [
+        "1723683"
+      ]
+    ],
+    "monthly_revenue_top_customers": [
+      []
+    ],
+    "recently_updated_orders": [
+      [
+        "2025-12-31 20:06:00.272310+00:00"
+      ],
+      [
+        "2025-12-31 12:05:40.060892+00:00"
+      ],
+      [
+        "2025-12-31 19:20:53.587512+00:00"
+      ],
+      [
+        "2025-12-31 11:12:19.133641+00:00"
+      ],
+      [
+        "2025-12-31 21:08:47.588391+00:00"
+      ],
+      [
+        "2025-12-31 20:32:10.234939+00:00"
+      ],
+      [
+        "2025-12-31 19:42:49.236886+00:00"
+      ],
+      [
+        "2025-12-31 17:02:47.512352+00:00"
+      ],
+      [
+        "2025-12-31 01:52:10.789133+00:00"
+      ],
+      [
+        "2025-12-31 02:49:19.930443+00:00"
+      ],
+      [
+        "2025-12-31 21:54:47.661816+00:00"
+      ],
+      [
+        "2025-12-31 00:10:19.817832+00:00"
+      ],
+      [
+        "2025-12-31 04:49:38.944031+00:00"
+      ],
+      [
+        "2025-12-31 06:40:49.437908+00:00"
+      ],
+      [
+        "2025-12-31 15:11:05.291273+00:00"
+      ],
+      [
+        "2025-12-31 12:53:57.603428+00:00"
+      ],
+      [
+        "2025-12-31 00:55:18.354308+00:00"
+      ],
+      [
+        "2025-12-31 13:23:30.305549+00:00"
+      ],
+      [
+        "2025-12-31 16:10:42.635213+00:00"
+      ],
+      [
+        "2025-12-31 21:55:08.133052+00:00"
+      ]
+    ]
+  }
+}

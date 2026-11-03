@@ -1,104 +1,733 @@
-[
-  {
-    "scenario": "s1_dropped_fk_index",
-    "candidate": "CREATE INDEX ON orders (customer_id)",
-    "target_query": "orders_by_customer",
-    "original_label": "SUPPORTED",
-    "original_ratio": 0.0050564681875037735,
-    "replications": [
-      {
-        "repeat": 0,
-        "label": "REJECTED",
-        "ratio": 0.005310784658535543,
-        "ci": [
-          0.004980308119582326,
-          0.005709618722584431
-        ],
-        "collateral": [
-          "touch_order"
-        ],
-        "warnings": [],
-        "guardrail": [
-          {
-            "query": "latest_orders_for_customer",
-            "ratio": 0.006404902123872383,
-            "ci_low": 0.0057823303559151286,
-            "ci_high": 0.007244253968196425,
-            "collateral_regression": false
-          },
-          {
-            "query": "touch_order",
-            "ratio": 1.4359863926621785,
-            "ci_low": 1.224212842136408,
-            "ci_high": 1.699277625911655,
-            "collateral_regression": true
-          }
-        ],
-        "run_dir": "results/replication/20261103T014630Z/runs/20261103T014640Z_rep0_cand1_orders_by_customer"
-      },
-      {
-        "repeat": 1,
-        "label": "SUPPORTED",
-        "ratio": 0.0048305931194736335,
-        "ci": [
-          0.004354412410590727,
-          0.005551881769693111
-        ],
-        "collateral": [],
-        "warnings": [
-          "touch_order"
-        ],
-        "guardrail": [
-          {
-            "query": "latest_orders_for_customer",
-            "ratio": 0.06335183666667472,
-            "ci_low": 0.05696766670717133,
-            "ci_high": 0.07049035467358601,
-            "collateral_regression": false
-          },
-          {
-            "query": "touch_order",
-            "ratio": 1.1578404422648758,
-            "ci_low": 1.0497241471658616,
-            "ci_high": 1.2951111980922252,
-            "collateral_regression": false
-          }
-        ],
-        "run_dir": "results/replication/20261103T014630Z/runs/20261103T014738Z_rep1_cand1_orders_by_customer"
-      },
-      {
-        "repeat": 2,
-        "label": "SUPPORTED",
-        "ratio": 0.004192830397767835,
-        "ci": [
-          0.003797702846505895,
-          0.004656249933886054
-        ],
-        "collateral": [],
-        "warnings": [],
-        "guardrail": [
-          {
-            "query": "latest_orders_for_customer",
-            "ratio": 0.004677393202206048,
-            "ci_low": 0.004319594533903422,
-            "ci_high": 0.005254374724441629,
-            "collateral_regression": false
-          },
-          {
-            "query": "touch_order",
-            "ratio": 1.150977681440103,
-            "ci_low": 0.9960265878471409,
-            "ci_high": 1.3643103827247003,
-            "collateral_regression": false
-          }
-        ],
-        "run_dir": "results/replication/20261103T014630Z/runs/20261103T014835Z_rep2_cand1_orders_by_customer"
-      }
-    ],
-    "labels": {
-      "REJECTED": 1,
-      "SUPPORTED": 2
+{
+  "environment": {
+    "captured_at_utc": "2026-11-03T02:00:07+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "ba2df76-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v230",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
     },
-    "agrees_with_original": 2
-  }
-]
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "repeats": 3,
+  "candidates": [
+    {
+      "scenario": "s1_dropped_fk_index",
+      "candidate": "CREATE INDEX ON orders (customer_id)",
+      "target_query": "orders_by_customer",
+      "original_label": "SUPPORTED",
+      "original_ratio": 0.0050564681875037735,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "REJECTED",
+          "ratio": 0.005310784658535543,
+          "ci": [
+            0.004980308119582326,
+            0.005709618722584431
+          ],
+          "collateral": [
+            "touch_order"
+          ],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.006404902123872383,
+              "ci_low": 0.0057823303559151286,
+              "ci_high": 0.007244253968196425,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.4359863926621785,
+              "ci_low": 1.224212842136408,
+              "ci_high": 1.699277625911655,
+              "collateral_regression": true
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T014640Z_rep0_cand1_orders_by_customer"
+        },
+        {
+          "repeat": 1,
+          "label": "SUPPORTED",
+          "ratio": 0.0048305931194736335,
+          "ci": [
+            0.004354412410590727,
+            0.005551881769693111
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.06335183666667472,
+              "ci_low": 0.05696766670717133,
+              "ci_high": 0.07049035467358601,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.1578404422648758,
+              "ci_low": 1.0497241471658616,
+              "ci_high": 1.2951111980922252,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T014738Z_rep1_cand1_orders_by_customer"
+        },
+        {
+          "repeat": 2,
+          "label": "SUPPORTED",
+          "ratio": 0.004192830397767835,
+          "ci": [
+            0.003797702846505895,
+            0.004656249933886054
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.004677393202206048,
+              "ci_low": 0.004319594533903422,
+              "ci_high": 0.005254374724441629,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.150977681440103,
+              "ci_low": 0.9960265878471409,
+              "ci_high": 1.3643103827247003,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T014835Z_rep2_cand1_orders_by_customer"
+        }
+      ],
+      "labels": {
+        "REJECTED": 1,
+        "SUPPORTED": 2
+      },
+      "agrees_with_original": 2
+    },
+    {
+      "scenario": "s1_dropped_fk_index",
+      "candidate": "CREATE INDEX ON orders (customer_id, created_at)",
+      "target_query": "latest_orders_for_customer",
+      "original_label": "SUPPORTED",
+      "original_ratio": 0.0025296929493627686,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "SUPPORTED",
+          "ratio": 0.0022156547413245313,
+          "ci": [
+            0.0018124470971297624,
+            0.002799110142924179
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 0.008588654921614307,
+              "ci_low": 0.007790976803299562,
+              "ci_high": 0.009694353659974345,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.153916484166323,
+              "ci_low": 1.0602550417615781,
+              "ci_high": 1.2767845258523876,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T014926Z_rep0_cand2_latest_orders_for_customer"
+        },
+        {
+          "repeat": 1,
+          "label": "SUPPORTED",
+          "ratio": 0.0015755517388071423,
+          "ci": [
+            0.0014315149013759247,
+            0.0017358007940086074
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 0.01134253316773169,
+              "ci_low": 0.010160403689888381,
+              "ci_high": 0.013142794834519456,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.1139164449103476,
+              "ci_low": 1.0167064714307388,
+              "ci_high": 1.2423347193592658,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015018Z_rep1_cand2_latest_orders_for_customer"
+        },
+        {
+          "repeat": 2,
+          "label": "SUPPORTED",
+          "ratio": 0.0014962744321474883,
+          "ci": [
+            0.0014088110981772006,
+            0.0015850414482103921
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 0.009296235609331058,
+              "ci_low": 0.008657716681032239,
+              "ci_high": 0.010021809046553606,
+              "collateral_regression": false
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.1935204815163305,
+              "ci_low": 1.079855525285332,
+              "ci_high": 1.338283425429926,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015111Z_rep2_cand2_latest_orders_for_customer"
+        }
+      ],
+      "labels": {
+        "SUPPORTED": 3
+      },
+      "agrees_with_original": 3
+    },
+    {
+      "scenario": "s2_stale_statistics",
+      "candidate": "ANALYZE orders",
+      "target_query": "segment_revenue_for_status",
+      "original_label": "SUPPORTED",
+      "original_ratio": 0.45052485806162224,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "SUPPORTED",
+          "ratio": 0.4340738073053433,
+          "ci": [
+            0.4174920981908511,
+            0.4542610964803645
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 0.903245159869252,
+              "ci_low": 0.8627029401570716,
+              "ci_high": 0.9445590335439527,
+              "collateral_regression": false
+            },
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.9193252616615494,
+              "ci_low": 0.8475461241948221,
+              "ci_high": 1.0204305713827924,
+              "collateral_regression": false
+            },
+            {
+              "query": "recent_orders_feed",
+              "ratio": 0.9884451164409417,
+              "ci_low": 0.9379494456646337,
+              "ci_high": 1.0266306258977973,
+              "collateral_regression": false
+            },
+            {
+              "query": "order_by_id",
+              "ratio": 1.0093160302318807,
+              "ci_low": 0.9850162516631702,
+              "ci_high": 1.0372027140715605,
+              "collateral_regression": false
+            },
+            {
+              "query": "monthly_revenue_top_customers",
+              "ratio": 0.9950566428960915,
+              "ci_low": 0.9700966154624604,
+              "ci_high": 1.0244404369911244,
+              "collateral_regression": false
+            },
+            {
+              "query": "recently_updated_orders",
+              "ratio": 0.9858922787563595,
+              "ci_low": 0.8620735660658132,
+              "ci_high": 1.1228726225481083,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015213Z_rep0_cand7_segment_revenue_for_status"
+        },
+        {
+          "repeat": 1,
+          "label": "SUPPORTED",
+          "ratio": 0.4400040619024334,
+          "ci": [
+            0.429500412072703,
+            0.451848189551456
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 0.9305781897545492,
+              "ci_low": 0.8581310562443881,
+              "ci_high": 0.9907355445533451,
+              "collateral_regression": false
+            },
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.9213445951005257,
+              "ci_low": 0.8656340594599646,
+              "ci_high": 0.9910004679771338,
+              "collateral_regression": false
+            },
+            {
+              "query": "recent_orders_feed",
+              "ratio": 1.026269127920253,
+              "ci_low": 0.9972413742672871,
+              "ci_high": 1.070962357710175,
+              "collateral_regression": false
+            },
+            {
+              "query": "order_by_id",
+              "ratio": 0.997687785861305,
+              "ci_low": 0.9276434922449147,
+              "ci_high": 1.068415730323434,
+              "collateral_regression": false
+            },
+            {
+              "query": "monthly_revenue_top_customers",
+              "ratio": 0.9947001933322578,
+              "ci_low": 0.9612534676819319,
+              "ci_high": 1.0211951486190822,
+              "collateral_regression": false
+            },
+            {
+              "query": "recently_updated_orders",
+              "ratio": 0.9866558667000771,
+              "ci_low": 0.9381874636401514,
+              "ci_high": 1.037858679345264,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015316Z_rep1_cand7_segment_revenue_for_status"
+        },
+        {
+          "repeat": 2,
+          "label": "SUPPORTED",
+          "ratio": 0.44704750305905727,
+          "ci": [
+            0.4369620944328251,
+            0.4570608157716691
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "orders_by_customer",
+              "ratio": 1.0012508772458366,
+              "ci_low": 0.9561315946285628,
+              "ci_high": 1.043455698957999,
+              "collateral_regression": false
+            },
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 0.8951565696369991,
+              "ci_low": 0.8346180327277283,
+              "ci_high": 0.9512526686510095,
+              "collateral_regression": false
+            },
+            {
+              "query": "recent_orders_feed",
+              "ratio": 0.9959985532875905,
+              "ci_low": 0.9455389515256568,
+              "ci_high": 1.0447906675509717,
+              "collateral_regression": false
+            },
+            {
+              "query": "order_by_id",
+              "ratio": 1.0130736920526802,
+              "ci_low": 0.9839281377995474,
+              "ci_high": 1.067709152852073,
+              "collateral_regression": false
+            },
+            {
+              "query": "monthly_revenue_top_customers",
+              "ratio": 1.0040458165997435,
+              "ci_low": 0.990814986356988,
+              "ci_high": 1.0172385867836904,
+              "collateral_regression": false
+            },
+            {
+              "query": "recently_updated_orders",
+              "ratio": 0.995215735438283,
+              "ci_low": 0.9092904806051402,
+              "ci_high": 1.0622327612596498,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015411Z_rep2_cand7_segment_revenue_for_status"
+        }
+      ],
+      "labels": {
+        "SUPPORTED": 3
+      },
+      "agrees_with_original": 3
+    },
+    {
+      "scenario": "s4_updated_at_index_dropped",
+      "candidate": "CREATE INDEX ON orders (updated_at)",
+      "target_query": "recently_updated_orders",
+      "original_label": "REJECTED",
+      "original_ratio": 0.004159543737872578,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "SUPPORTED",
+          "ratio": 0.0029644738731216874,
+          "ci": [
+            0.0028236221922332584,
+            0.0031209441864777365
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.1867472277398614,
+              "ci_low": 1.0891774823817524,
+              "ci_high": 1.3235887765489576,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015511Z_rep0_cand3_recently_updated_orders"
+        },
+        {
+          "repeat": 1,
+          "label": "SUPPORTED",
+          "ratio": 0.0033603573129732923,
+          "ci": [
+            0.0030869629004043587,
+            0.0036714924396212584
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.1664026543266026,
+              "ci_low": 1.0982640009378422,
+              "ci_high": 1.2566584381701273,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015536Z_rep1_cand3_recently_updated_orders"
+        },
+        {
+          "repeat": 2,
+          "label": "SUPPORTED",
+          "ratio": 0.0029618830518754634,
+          "ci": [
+            0.0027813618237384524,
+            0.003149272993619868
+          ],
+          "collateral": [],
+          "warnings": [
+            "touch_order"
+          ],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.1724669498371096,
+              "ci_low": 1.0935720788475987,
+              "ci_high": 1.3039102698974316,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015557Z_rep2_cand3_recently_updated_orders"
+        }
+      ],
+      "labels": {
+        "SUPPORTED": 3
+      },
+      "agrees_with_original": 0
+    },
+    {
+      "scenario": "s5_created_at_index_dropped",
+      "candidate": "CREATE INDEX ON orders (created_at)",
+      "target_query": "recent_orders_feed",
+      "original_label": "REJECTED",
+      "original_ratio": 0.0033396935898629475,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "REJECTED",
+          "ratio": 0.0029947776174936713,
+          "ci": [
+            0.0026376255056097856,
+            0.003457366829040985
+          ],
+          "collateral": [
+            "latest_orders_for_customer"
+          ],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 4.439811093296393,
+              "ci_low": 3.8914353561100383,
+              "ci_high": 5.049601243695899,
+              "collateral_regression": true
+            },
+            {
+              "query": "touch_order",
+              "ratio": 0.8944091033864002,
+              "ci_low": 0.8156048274326085,
+              "ci_high": 0.9726709809759885,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015625Z_rep0_cand8_recent_orders_feed"
+        },
+        {
+          "repeat": 1,
+          "label": "REJECTED",
+          "ratio": 0.0024826068906503543,
+          "ci": [
+            0.0023102305812851384,
+            0.002664343108549179
+          ],
+          "collateral": [
+            "latest_orders_for_customer"
+          ],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 5.6196735355475145,
+              "ci_low": 5.118862784781361,
+              "ci_high": 6.1552310967669905,
+              "collateral_regression": true
+            },
+            {
+              "query": "touch_order",
+              "ratio": 0.9873201929509002,
+              "ci_low": 0.8195051985366439,
+              "ci_high": 1.1333398397277725,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015658Z_rep1_cand8_recent_orders_feed"
+        },
+        {
+          "repeat": 2,
+          "label": "REJECTED",
+          "ratio": 0.002769387886375533,
+          "ci": [
+            0.002618990241792523,
+            0.002922365437792426
+          ],
+          "collateral": [
+            "latest_orders_for_customer"
+          ],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "latest_orders_for_customer",
+              "ratio": 4.639303684898459,
+              "ci_low": 4.206580552592202,
+              "ci_high": 5.1127956220475985,
+              "collateral_regression": true
+            },
+            {
+              "query": "touch_order",
+              "ratio": 1.0132363823666835,
+              "ci_low": 0.9694872586618203,
+              "ci_high": 1.0565128077730792,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015730Z_rep2_cand8_recent_orders_feed"
+        }
+      ],
+      "labels": {
+        "REJECTED": 3
+      },
+      "agrees_with_original": 3
+    },
+    {
+      "scenario": "s6_noisy_neighbor",
+      "candidate": "CREATE INDEX ON orders (status)",
+      "target_query": "segment_revenue_for_status",
+      "original_label": "SUPPORTED",
+      "original_ratio": 0.3315785913951234,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "SUPPORTED",
+          "ratio": 0.3522283324956888,
+          "ci": [
+            0.3433483586670236,
+            0.3600747803408498
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.0412796810118832,
+              "ci_low": 0.9926702411549654,
+              "ci_high": 1.1199656280527264,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015807Z_rep0_cand6_segment_revenue_for_status"
+        },
+        {
+          "repeat": 1,
+          "label": "SUPPORTED",
+          "ratio": 0.34958176190250445,
+          "ci": [
+            0.3357157310079749,
+            0.3683803514451657
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.0624115671084937,
+              "ci_low": 0.9213190365978656,
+              "ci_high": 1.2684085242603957,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015819Z_rep1_cand6_segment_revenue_for_status"
+        },
+        {
+          "repeat": 2,
+          "label": "SUPPORTED",
+          "ratio": 0.37193220421013157,
+          "ci": [
+            0.35668376009391145,
+            0.38917603690856367
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [
+            {
+              "query": "touch_order",
+              "ratio": 1.029318230992367,
+              "ci_low": 0.9884260604338604,
+              "ci_high": 1.069948786270589,
+              "collateral_regression": false
+            }
+          ],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015828Z_rep2_cand6_segment_revenue_for_status"
+        }
+      ],
+      "labels": {
+        "SUPPORTED": 3
+      },
+      "agrees_with_original": 3
+    },
+    {
+      "scenario": "s6_noisy_neighbor",
+      "candidate": "SET work_mem = '256MB' for this query's session",
+      "target_query": "monthly_revenue_top_customers",
+      "original_label": "REJECTED",
+      "original_ratio": 1.0767478785280231,
+      "replications": [
+        {
+          "repeat": 0,
+          "label": "REJECTED",
+          "ratio": 1.0513460854530299,
+          "ci": [
+            1.0304686368747502,
+            1.0741397400113264
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015836Z_rep0_cand5_monthly_revenue_top_customers"
+        },
+        {
+          "repeat": 1,
+          "label": "REJECTED",
+          "ratio": 1.0495495729053228,
+          "ci": [
+            1.0139042787054917,
+            1.0865279131919419
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015907Z_rep1_cand5_monthly_revenue_top_customers"
+        },
+        {
+          "repeat": 2,
+          "label": "REJECTED",
+          "ratio": 1.0565654950959338,
+          "ci": [
+            1.0321943360193433,
+            1.0813996778973876
+          ],
+          "collateral": [],
+          "warnings": [],
+          "guardrail": [],
+          "run_dir": "results/replication/20261103T014630Z/runs/20261103T015937Z_rep2_cand5_monthly_revenue_top_customers"
+        }
+      ],
+      "labels": {
+        "REJECTED": 3
+      },
+      "agrees_with_original": 3
+    }
+  ]
+}

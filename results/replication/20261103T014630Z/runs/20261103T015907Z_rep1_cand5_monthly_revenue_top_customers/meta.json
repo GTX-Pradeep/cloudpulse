@@ -1,0 +1,127 @@
+{
+  "spec": {
+    "name": "rep1_cand5_monthly_revenue_top_customers",
+    "description": "SET work_mem = '256MB' for this query's session",
+    "scale": "default",
+    "seed": 42,
+    "baseline_sql": [
+      "CREATE INDEX orders_customer_id_idx ON orders (customer_id)",
+      "CREATE INDEX orders_created_at_idx ON orders (created_at)",
+      "CREATE INDEX orders_updated_at_idx ON orders (updated_at)",
+      "ANALYZE orders"
+    ],
+    "queries": [
+      {
+        "name": "monthly_revenue_top_customers",
+        "sql": "SELECT customer_id, date_trunc('month', created_at) AS month, sum(amount) AS revenue, count(*) AS n FROM orders WHERE created_at >= '2025-01-01' AND created_at < '2026-01-01' GROUP BY 1, 2 ORDER BY revenue DESC LIMIT 20",
+        "kind": "read",
+        "params": {
+          "type": "none",
+          "n": 1
+        },
+        "weight": 0.2,
+        "compare_results": true
+      }
+    ],
+    "arm_a": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      }
+    },
+    "arm_b": {
+      "name": "B",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "256MB"
+      }
+    },
+    "protocol": {
+      "blocks": 15,
+      "warmup_rounds": 1,
+      "seed": 9017,
+      "statement_timeout_ms": 60000,
+      "lab_session": {
+        "synchronous_commit": "off"
+      }
+    },
+    "target_query": "monthly_revenue_top_customers"
+  },
+  "environment": {
+    "captured_at_utc": "2026-11-03T01:59:07+00:00",
+    "env_label": "dev-cloud-sandbox (not official)",
+    "cloudpulse_version": "0.1.0",
+    "git_commit": "ba2df76-dirty",
+    "host": {
+      "os": "Linux 6.18.44-fc-v230",
+      "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+      "cpu_count": 2,
+      "mem_total_gb": 7.8,
+      "python": "3.13.16",
+      "psycopg": "3.3.6"
+    },
+    "postgres": {
+      "compute_query_id": "on",
+      "effective_cache_size": "5242888kB",
+      "jit": "off",
+      "max_parallel_workers_per_gather": "2",
+      "random_page_cost": "4",
+      "server_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+      "shared_buffers": "327688kB",
+      "synchronous_commit": "on",
+      "track_io_timing": "on",
+      "work_mem": "4096kB",
+      "extensions": {
+        "hypopg": "1.4.0",
+        "plpgsql": "1.0"
+      }
+    }
+  },
+  "base_database": "cp_base_208141e240df",
+  "base_fingerprint": {
+    "customers": 100000,
+    "customers_hash": "279244885607021745094",
+    "orders": 2000000,
+    "orders_hash": "-358039015515228316005"
+  },
+  "arms": {
+    "A": {
+      "name": "A",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "64MB"
+      },
+      "setup_seconds": 0.003,
+      "index_bytes": 153231360,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    },
+    "B": {
+      "name": "B",
+      "setup_sql": [],
+      "session": {
+        "work_mem": "256MB"
+      },
+      "setup_seconds": 0.003,
+      "index_bytes": 153231360,
+      "indexes": [
+        "customers_pkey",
+        "orders_pkey",
+        "orders_customer_id_idx",
+        "orders_created_at_idx",
+        "orders_updated_at_idx"
+      ]
+    }
+  },
+  "params": {
+    "monthly_revenue_top_customers": [
+      []
+    ]
+  }
+}
