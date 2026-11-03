@@ -71,6 +71,12 @@ def cmd_similarity(args) -> None:
     print(_json.dumps(res, indent=2))
 
 
+def cmd_replicate(args) -> None:
+    from cloudpulse.replication import replicate
+    out = replicate(load_settings(), repeats=args.repeats)
+    print((out / "summary.md").read_text())
+
+
 def cmd_worker(args) -> None:  # pragma: no cover
     from cloudpulse.jobs.worker import run_forever
     run_forever(load_settings())
@@ -114,6 +120,10 @@ def main(argv: list[str] | None = None) -> None:
 
     s = sub.add_parser("similarity-benchmark")
     s.set_defaults(fn=cmd_similarity)
+
+    s = sub.add_parser("replicate", help="re-run tested candidates to check verdict stability")
+    s.add_argument("--repeats", type=int, default=3)
+    s.set_defaults(fn=cmd_replicate)
 
     s = sub.add_parser("worker")
     s.set_defaults(fn=cmd_worker)

@@ -291,6 +291,25 @@ def _cap(q: QuerySpec) -> QuerySpec:
     return QuerySpec(q.name, q.sql, q.kind, p, q.weight, q.compare_results)
 
 
+def build_candidate_spec(
+    cand: dict, lab_state: LabState, protocol: Protocol, name: str
+) -> tuple[ExperimentSpec, QuerySpec, list[QuerySpec]]:
+    """Turn a stored candidate into an A/B experiment: target query + guardrail."""
+    target = _cap(BY_NAME[cand["template_name"]])
+    guard = [g if g.params.get("type") == "union" else _cap(g)
+             for g in guardrail_queries(cand, target)]
+    spec = ExperimentSpec(
+        name=f"{name}_{target.name}",
+        description=cand["description"],
+        scale=lab_state.scale, seed=lab_state.seed, baseline_sql=lab_state.sql,
+        queries=[target, *guard],
+        arm_a=ArmSpec("A", [], dict(lab_state.db_settings)),
+        arm_b=ArmSpec("B", list(cand["setup_sql"]), {**lab_state.db_settings, **cand["session"]}),
+        protocol=protocol, target_query=target.name,
+    )
+    return spec, target, guard
+
+
 def run_candidate_experiment(
     settings: Settings, candidate_id: int, lab_state: LabState,
     protocol: Protocol | None = None, log=print,
@@ -300,19 +319,8 @@ def run_candidate_experiment(
         "SELECT c.*, q.template_name, i.id AS incident_id FROM candidates c "
         "JOIN performance_incidents i ON i.id = c.incident_id JOIN queries q ON q.id = i.query_id "
         "WHERE c.id = %s", (candidate_id,))
-    target = _cap(BY_NAME[cand["template_name"]])
-    guard = [g if g.params.get("type") == "union" else _cap(g)
-             for g in guardrail_queries(cand, target)]
     protocol = protocol or Protocol(blocks=15, warmup_rounds=1, seed=4242)
-    spec = ExperimentSpec(
-        name=f"cand{candidate_id}_{target.name}",
-        description=cand["description"],
-        scale=lab_state.scale, seed=lab_state.seed, baseline_sql=lab_state.sql,
-        queries=[target, *guard],
-        arm_a=ArmSpec("A", [], dict(lab_state.db_settings)),
-        arm_b=ArmSpec("B", list(cand["setup_sql"]), {**lab_state.db_settings, **cand["session"]}),
-        protocol=protocol, target_query=target.name,
-    )
+    spec, target, guard = build_candidate_spec(cand, lab_state, protocol, f"cand{candidate_id}")
     store.execute(settings.meta_dsn, "DELETE FROM experiments WHERE candidate_id = %s", (candidate_id,))
     exp_id = store.execute(
         settings.meta_dsn,
