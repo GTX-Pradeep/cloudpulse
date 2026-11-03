@@ -107,6 +107,27 @@ candidate, not a root-cause claim.
   slowdown at +13% [+9%, +17%], which passed the 10% veto with a warning. The
   corrected run measured +23% and vetoed it. See F-5.
 
+### Are the verdicts stable? (replication)
+Every tested candidate was re-run 3 more times with fresh twin databases and new
+shuffle seeds ([`results/replication`](results/replication/20261103T014630Z/summary.md)):
+
+| Candidate | Verdicts over 4 runs | Consolidated |
+|---|---|---|
+| S5 `CREATE INDEX (created_at)` | REJECTED ×4 (collateral 4.4×–5.7× every run) | **REJECTED** |
+| S2 `ANALYZE orders` | SUPPORTED ×4 (target 0.43–0.45) | **SUPPORTED** |
+| S1 `CREATE INDEX (customer_id, created_at)` | SUPPORTED ×4 | **SUPPORTED** |
+| S6 `CREATE INDEX (status)` / `work_mem 256MB` | SUPPORTED ×4 / REJECTED ×4 | **stable** |
+| S4 `CREATE INDEX (updated_at)` | REJECTED ×1, SUPPORTED ×3 | **UNSTABLE** |
+| S1 `CREATE INDEX (customer_id)` | SUPPORTED ×3, REJECTED ×1 | **UNSTABLE** |
+
+The headline holds. The two unstable cases are informative: the UPDATE slowdown
+caused by the extra index was **consistently +17% to +23%** in all four S4 runs, but
+the lower end of its confidence interval sat right on the 10% veto line (1.09–1.15),
+so the verdict flipped. The *effect* replicates; its *classification* does not.
+CloudPulse now reports such candidates as UNSTABLE instead of picking a side
+(D-023, F-11). Replication ran after the sandbox restarted on a 2.30 GHz host; each
+results file records its own hardware.
+
 ### Is the measurement method trustworthy? (A/A calibration)
 10 repeats × 5 queries with **identical** arms and fresh twin databases each time
 ([`results/calibration`](results/calibration/20261102T185543Z/summary.json)):
@@ -129,12 +150,13 @@ written by the same author as the features, so this shows the features behave
 as designed, not that they generalise.
 
 ### Mistakes found and fixed along the way
-The [decision log](docs/decisions.md) records 10 of them, including:
+The [decision log](docs/decisions.md) records 11 of them, including:
 - a `work_mem` hypothesis that measurement disproved (F-1);
 - EXPLAIN buffer counters being inclusive of child nodes (F-2);
 - psycopg splitting one query into several `pg_stat_statements` entries by integer size (F-4/D-019);
 - two guardrail sampling gaps (F-7, F-9);
-- a bookkeeping bug that produced fake false positives (F-8).
+- a bookkeeping bug that produced fake false positives (F-8);
+- verdicts that flip between runs when an effect sits on a decision margin (F-11).
 
 
 ## How it works
@@ -166,7 +188,7 @@ flowchart LR
 | **Guardrail** | Every query whose plan may change plus every write on the table, Bonferroni-adjusted, +10% veto | A locally excellent index can be globally harmful |
 
 More detail: [architecture](docs/architecture.md) ·
-[decision log](docs/decisions.md) (every design choice, its alternatives, and **10 documented mistakes**) ·
+[decision log](docs/decisions.md) (every design choice, its alternatives, and **11 documented mistakes**) ·
 [learning notes](docs/learn/).
 
 ## Quick start

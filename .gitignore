@@ -10,3 +10,4 @@ dist/
 results/scratch/
 .DS_Store
 .cache/
+docs/guide/img/*.dot

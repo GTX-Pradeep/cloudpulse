@@ -1,0 +1,30 @@
+[
+  {
+    "scenario": "t0_control",
+    "title": "TPC-H: no fault (false-positive control)",
+    "rounds": {
+      "baseline": 14,
+      "after_fault": 8
+    },
+    "baseline_false_positives": [],
+    "flagged_after_fault": {},
+    "expected_query": null,
+    "detected": null,
+    "detection_delay_rounds": null,
+    "diagnosis_rules": [],
+    "diagnosis_correct": null,
+    "candidates": [],
+    "incidents": [],
+    "observed_ratio": {
+      "tpch_customer_recent_orders": 0.969,
+      "tpch_order_lines": 1.038,
+      "tpch_order_lookup": 0.911,
+      "tpch_q14_promotion_effect": 1.266,
+      "tpch_q3_shipping_priority": 0.917,
+      "tpch_q4_order_priority": 0.827,
+      "tpch_q6_forecast_revenue": 1.073,
+      "tpch_touch_lineitem": 0.878
+    },
+    "seconds": 42.0
+  }
+]
