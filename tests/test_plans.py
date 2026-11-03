@@ -95,3 +95,11 @@ def test_fingerprint_changes_with_plan_shape():
 def test_filter_column_extraction(expr, cols, eq):
     assert features.filter_columns(expr) == cols
     assert features.equality_columns(expr) == eq
+
+
+def test_hotspot_share_is_a_fraction_even_for_parallel_plans():
+    """F-12: parallel workers count as loops, so self time can exceed wall-clock time."""
+    for f in GOLDEN.glob("*.json"):
+        for x in features.extract(tree.parse(json.loads(f.read_text()))):
+            if x.kind == "hotspot":
+                assert 0 < x.detail["share"] <= 1.0

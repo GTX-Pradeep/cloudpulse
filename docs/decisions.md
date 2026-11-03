@@ -336,3 +336,16 @@ candidates three times each.
   S1's `customer_id` index: UPDATE +15% to +44% (one run vetoed).
 - **Lesson:** the *effect* was reproducible; its *classification* was not, because it
   sits on a threshold. Report the stability of a verdict, not only the verdict.
+
+### F-12 · Hotspot shares above 100% in parallel plans
+Found while writing the worked example for the guide: the S5 incident's plan
+reported its Seq Scan as a "hotspot" holding 274% of execution time (532 ms of self
+time in a 194 ms query). Self time is per-loop time × loops, and parallel workers
+count as loops, so in a parallel plan it measures *process* time summed over workers,
+not wall-clock time. Dividing it by wall-clock execution time is meaningless.
+- **Fix:** shares are now computed against the sum of all nodes' self times (always
+  a proper fraction), in both the findings and the UI. A test asserts every hotspot
+  share in the golden plans lies in (0, 1].
+- **Impact:** hotspot findings are descriptive only (no rule creates a candidate from
+  them), so no diagnosis or verdict was affected. Stored findings from earlier runs
+  keep their old share values.

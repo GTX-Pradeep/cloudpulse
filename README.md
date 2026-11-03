@@ -150,13 +150,14 @@ written by the same author as the features, so this shows the features behave
 as designed, not that they generalise.
 
 ### Mistakes found and fixed along the way
-The [decision log](docs/decisions.md) records 11 of them, including:
+The [decision log](docs/decisions.md) records 12 of them, including:
 - a `work_mem` hypothesis that measurement disproved (F-1);
 - EXPLAIN buffer counters being inclusive of child nodes (F-2);
 - psycopg splitting one query into several `pg_stat_statements` entries by integer size (F-4/D-019);
 - two guardrail sampling gaps (F-7, F-9);
 - a bookkeeping bug that produced fake false positives (F-8);
-- verdicts that flip between runs when an effect sits on a decision margin (F-11).
+- verdicts that flip between runs when an effect sits on a decision margin (F-11);
+- impossible "hotspot" shares in parallel plans, found while writing the guide (F-12).
 
 
 ## How it works
@@ -188,7 +189,7 @@ flowchart LR
 | **Guardrail** | Every query whose plan may change plus every write on the table, Bonferroni-adjusted, +10% veto | A locally excellent index can be globally harmful |
 
 More detail: [architecture](docs/architecture.md) ·
-[decision log](docs/decisions.md) (every design choice, its alternatives, and **11 documented mistakes**) ·
+[decision log](docs/decisions.md) (every design choice, its alternatives, and **12 documented mistakes**) ·
 [learning notes](docs/learn/).
 
 ## Quick start

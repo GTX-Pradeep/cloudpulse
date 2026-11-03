@@ -130,13 +130,18 @@ def extract(plan: Plan, table_rows: dict[str, float] | None = None) -> list[Find
             out.append(Finding("workers_not_launched", n.node_type, n.relation, {
                 "planned": n.workers_planned, "launched": n.workers_launched,
             }))
-    # 7. hotspots: nodes holding >= 50% of execution time
+    # 7. hotspots: nodes holding >= 50% of the plan's total node time.
+    #    Self time is summed over loops, and parallel workers count as loops, so
+    #    in a parallel plan it is *process* time and can exceed wall-clock
+    #    execution time (F-12). Shares are therefore taken of the sum of all
+    #    nodes' self times, which is always a proper fraction.
     if plan.analyzed and total_ms:
-        for n in plan.nodes():
-            st = n.self_time_ms
-            if st is not None and st / total_ms >= 0.5:
+        times = [(n, n.self_time_ms) for n in plan.nodes() if n.self_time_ms is not None]
+        node_total = sum(t for _, t in times)
+        for n, st in times:
+            if node_total and st / node_total >= 0.5:
                 out.append(Finding("hotspot", n.node_type, n.relation, {
-                    "self_time_ms": round(st, 3), "share": round(st / total_ms, 3),
+                    "self_time_ms": round(st, 3), "share": round(st / node_total, 3),
                 }))
     return out
 

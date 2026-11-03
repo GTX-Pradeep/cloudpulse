@@ -110,7 +110,7 @@ def plan_rows(plan_json) -> list[dict]:
             walk(c, depth + 1)
 
     walk(p.root, 0)
-    total = p.execution_ms or 0
+    total = sum(r["self_ms"] or 0 for r in out)  # process time; see F-12
     for r in out:
         r["share"] = (r["self_ms"] or 0) / total if total else 0
     return out

@@ -205,8 +205,30 @@ def chart_tpch():
     return True
 
 
+def dump_walkthrough(incident_scenario="s5_created_at_index_dropped"):
+    """Every stored value for the latest incident of a scenario (used for the worked example)."""
+    import psycopg
+    from psycopg.rows import dict_row
+    c = psycopg.connect("postgresql://cloudpulse@localhost:5435/cloudpulse", row_factory=dict_row)
+    inc = c.execute("SELECT i.*, q.template_name, q.query_text, q.queryid FROM performance_incidents i "
+                    "JOIN queries q ON q.id = i.query_id WHERE i.scenario = %s ORDER BY i.id DESC LIMIT 1",
+                    (incident_scenario,)).fetchone()
+    plan = c.execute("SELECT fingerprint, params, plan, findings FROM execution_plans "
+                     "WHERE incident_id = %s AND source = 'incident_explain_analyze'", (inc["id"],)).fetchone()
+    diags = c.execute("SELECT rule, hypothesis, limitations FROM diagnoses WHERE incident_id = %s", (inc["id"],)).fetchall()
+    cands = c.execute("SELECT c.description, c.setup_sql, c.hypopg, e.run_dir, v.label, v.reason, v.target, v.guardrail "
+                      "FROM candidates c JOIN experiments e ON e.candidate_id = c.id JOIN verdicts v ON v.experiment_id = e.id "
+                      "WHERE c.incident_id = %s", (inc["id"],)).fetchall()
+    n_runs = c.execute("SELECT count(*) AS n FROM experiment_runs r JOIN experiments e ON e.id = r.experiment_id "
+                       "JOIN candidates c ON c.id = e.candidate_id WHERE c.incident_id = %s", (inc["id"],)).fetchone()["n"]
+    out = {"incident": {k: inc[k] for k in ("id", "scenario", "template_name", "query_text", "queryid", "baseline_median_ms",
+                                            "baseline_mad_ms", "current_ms", "ratio", "evidence", "status", "outcome", "detected_at")},
+           "plan": plan, "diagnoses": diags, "candidates": cands, "n_raw_timings": n_runs}
+    (OUT / "walkthrough.json").write_text(json.dumps(out, indent=1, default=str))
+
+
 if __name__ == "__main__":
-    which = sys.argv[1:] or ["s5", "detection", "calibration", "bootstrap", "replication", "tpch"]
+    which = sys.argv[1:] or ["s5", "detection", "calibration", "bootstrap", "replication", "tpch", "walkthrough"]
     info = {}
     if "s5" in which:
         info["s5"] = chart_s5_customers()
@@ -220,5 +242,8 @@ if __name__ == "__main__":
         chart_replication()
     if "tpch" in which:
         chart_tpch()
-    (OUT / "chart_info.json").write_text(json.dumps(info, indent=1, default=str))
+    if "walkthrough" in which or not sys.argv[1:]:
+        dump_walkthrough()
+    if info:
+        (OUT / "chart_info.json").write_text(json.dumps(info, indent=1, default=str))
     print(sorted(p.name for p in OUT.glob("chart_*.png")))

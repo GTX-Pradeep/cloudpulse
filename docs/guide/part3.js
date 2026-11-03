@@ -69,6 +69,55 @@ module.exports = () => {
     return [sc(s.scenario) + note, obs, det, `${s.baseline_false_positives.length}`, diag, cs];
   };
 
+
+  // ---------- worked example (all values from the meta DB, dumped by charts.py) ----------
+  const W = JSON.parse(fs.readFileSync(path.join(__dirname, "img", "walkthrough.json"), "utf8"));
+  const wi = W.incident, wp = W.plan, wc = W.candidates[0];
+  const planRows = [];
+  (function walk(n, d) {
+    const loops = n["Actual Loops"] || 1;
+    planRows.push([" ".repeat(d * 3) + n["Node Type"] + (n["Relation Name"] ? ` on ${n["Relation Name"]}` : ""),
+      String(n["Plan Rows"]), String(n["Actual Rows"]), String(loops), n["Actual Total Time"] !== undefined ? n["Actual Total Time"].toFixed(1) : "",
+      (n["Filter"] || n["Sort Key"] && "sort: " + n["Sort Key"].join(", ") || "") + (n["Rows Removed by Filter"] ? ` (removed ${n["Rows Removed by Filter"].toLocaleString("en-US")} per loop)` : "")]);
+    (n.Plans || []).forEach((c) => walk(c, d + 1));
+  })(wp.plan.Plan, 0);
+  const tgt = wc.target.effect, gq = wc.guardrail.queries;
+  const workedExample = [
+    { t: "h2", text: "14.3 Worked example: one incident, every step, real values" },
+    { t: "p", text: `Incident ${wi.id} (scenario ${wi.scenario}, after fix F-9). Every value below is read from the evidence database; this is exactly what CloudPulse stored.` },
+    { t: "h3", text: "Step 1. Telemetry and detection" },
+    { t: "code", text: `queryid ${wi.queryid}\n${wi.query_text}` , caption: "The statement as pg_stat_statements normalised it (constants became $n)" },
+    { t: "bullets", items: [
+      `Baseline: median of interval means **${wi.baseline_median_ms.toFixed(3)} ms**, MAD ${wi.baseline_mad_ms.toFixed(4)} ms (from up to 20 healthy intervals).`,
+      `After the fault, intervals ${wi.evidence.anomalous_points.join(", ")} were anomalous (3 of the last 4 → regression declared). Current value: **${wi.current_ms.toFixed(1)} ms**, i.e. **${Math.round(wi.ratio).toLocaleString("en-US")}×** the baseline, robust z = ${Math.round(wi.evidence.z).toLocaleString("en-US")}.`,
+      "A row was inserted into performance_incidents (the partial unique index guarantees it is the only open one for this query) and an investigate job was queued.",
+    ] },
+    { t: "h3", text: "Step 2. Plan capture on the target" },
+    { t: "p", text: `EXPLAIN (ANALYZE, BUFFERS) was run in a READ ONLY transaction for 5 parameter values; the slowest used parameter ${JSON.stringify(wp.params)} and took **${wp.plan["Execution Time"].toFixed(1)} ms**. Plan fingerprint ${wp.fingerprint}; plan shape changed since the healthy baseline: **${wi.evidence.plan_changed_since_baseline ? "yes" : "no"}** (the healthy plan used the created_at index).` },
+    { t: "table", headers: ["Node", "Est. rows", "Actual rows", "Loops", "Time ms", "Filter / detail"], widths: [1.6, 0.6, 0.7, 0.5, 0.6, 2.5], rows: planRows },
+    { t: "h3", text: "Step 3. Findings" },
+    { t: "bullets", items: wp.findings.map((f) => `**${f.kind}** on ${f.relation}: ` + (f.kind === "filtered_seq_scan"
+      ? `${f.detail.rows_examined.toLocaleString("en-US")} rows examined, ${f.detail.rows_kept.toLocaleString("en-US")} kept (selectivity ${(f.detail.selectivity * 100).toFixed(2)}%), filter columns ${f.detail.filter_columns.join(", ")}`
+      : `self time ${f.detail.self_time_ms} ms, stored share ${f.detail.share}. A share above 1 is the parallel-plan bug F-12, found while writing this guide and fixed since.`)) },
+    { t: "h3", text: "Step 4. Diagnosis" },
+    ...W.diagnoses.map((d) => ({ t: "callout", kind: "note", text: `[${d.rule}] ${d.hypothesis} Limitations: ${d.limitations}` })),
+    { t: "h3", text: "Step 5. Candidate and HypoPG what-if" },
+    { t: "bullets", items: [
+      `Candidate: \`${wc.setup_sql[0]}\`.`,
+      `HypoPG: the planner would use it; estimated cost of the target query ${Math.round(wc.hypopg.target_cost_before).toLocaleString("en-US")} → ${wc.hypopg.target_cost_after.toFixed(2)}.`,
+      `Of up to ${wc.hypopg.details.params_checked} parameter values checked per tracked read, **${wc.hypopg.details.plans_changed_per_query.latest_orders_for_customer}** values of latest_orders_for_customer changed plan; the first ${wc.hypopg.changed_params.latest_orders_for_customer.length} (customers ${wc.hypopg.changed_params.latest_orders_for_customer.map((x) => x[0]).join(", ")}) were forwarded to the guardrail.`,
+      `Writes on the table: ${wc.hypopg.writes_on_table.join(", ")}, added to the guardrail (index maintenance).`,
+    ] },
+    { t: "h3", text: "Step 6. Experiment" },
+    { t: "p", text: `Twin databases were cloned from the lab base; arm B got the index. 15 blocks, ${W.n_raw_timings.toLocaleString("en-US")} timed executions stored (${path.basename(wc.run_dir)}).` },
+    { t: "table", headers: ["Query", "Role", "Time ratio B/A", "CI", "Median A → B (µs)", "Outcome"], widths: [1.7, 0.7, 0.8, 1.1, 1.3, 1.2], rows: [
+      ["recent_orders_feed", "target", f3(tgt.ratio), `95%: [${f3(tgt.ci_low)}, ${f3(tgt.ci_high)}]`, `${Math.round(tgt.median_us_a).toLocaleString("en-US")} → ${Math.round(tgt.median_us_b)}`, "≥ 5% faster: yes"],
+      ...gq.map((g) => [g.query, "guardrail", f3(g.ratio), `${(g.confidence * 100).toFixed(1)}%: [${f2(g.ci_low)}, ${f2(g.ci_high)}]`, `${Math.round(g.median_us_a).toLocaleString("en-US")} → ${Math.round(g.median_us_b).toLocaleString("en-US")}`, g.collateral_regression ? "collateral regression (veto)" : g.ci_low > 1 ? "slower, below veto margin (warning)" : "ok"]),
+    ] },
+    { t: "h3", text: "Step 7. Verdict and outcome" },
+    { t: "callout", kind: "key", text: `${wc.label}: ${wc.reason}` },
+    { t: "p", text: `Incident status: **${wi.status}**: ${wi.outcome}. Nothing was applied to the target; a person reviews this evidence in the UI.` },
+  ];
   const blocks = [];
   // ------------------------------------------------------------------ results
   blocks.push(
@@ -91,7 +140,8 @@ module.exports = () => {
     { t: "p", text: verdictText(cands(s5, "recent_orders_feed")[0]) + `. Weighted workload change: ${cands(s5, "recent_orders_feed")[0].guardrail.weighted_change_pct}% (informational).` },
     { t: "img", file: "chart_bootstrap.png", width: 600, caption: "Figure 14.2: How the guardrail interval for latest_orders_for_customer is built: 15 block ratios, then 10,000 bootstrap resamples. The whole interval lies far above the 1.10 veto line." },
     { t: "callout", kind: "tip", text: "This is the story to tell: the obvious fix is excellent for the query that regressed and terrible for a few big customers on another query. CloudPulse caught it because it benchmarks the parameter values where the plan changes, including the heaviest ones. Two earlier runs missed it, which is how F-7 and F-9 were discovered." },
-    { t: "h2", text: "14.3 All scenarios" },
+    ...workedExample,
+    { t: "h2", text: "14.4 All scenarios" },
     { t: "table", headers: ["Scenario", "Measured effect on its query", "Detected", "False alarms before fault", "Diagnosis", "Candidate → verdict"], widths: [0.7, 0.9, 1.2, 0.7, 1.1, 3.2], rows: [
       scenRow(byScen.s0_control), scenRow(byScen.s1_dropped_fk_index), scenRow(byScen.s2_stale_statistics), scenRow(s2, " (16-int.)"),
       scenRow(byScen.s3_work_mem_lowered), scenRow(byScen.s4_updated_at_index_dropped), scenRow(byScen.s5_created_at_index_dropped), scenRow(s5, " (after F-9)"),
@@ -103,10 +153,10 @@ module.exports = () => {
       "**Diagnosis:** the expected rule fired for every detected scenario.",
       "**S6 (contention):** the report queries were flagged; the `work_mem` candidate was REJECTED (no gain), and an index on `status` was SUPPORTED. It genuinely speeds that query in isolation but does not address the actual cause. A SUPPORTED verdict is about the candidate, not a root-cause claim.",
     ] },
-    { t: "img", file: "chart_detection.png", width: 600, caption: "Figure 14.3: Interval means relative to each query's own baseline median; circles mark intervals counted as anomalous." },
-    { t: "h2", text: "14.4 A/A calibration: can the method be trusted?" },
+    { t: "img", file: "chart_detection.png", width: 600, caption: "Figure 14.4: Interval means relative to each query's own baseline median; circles mark intervals counted as anomalous." },
+    { t: "h2", text: "14.5 A/A calibration: can the method be trusted?" },
     { t: "p", text: `${cal.repeats} repeats × ${cal.queries.length} queries with identical arms and fresh twins (${calDir}). False SUPPORTED: **${cal.false_supported}/${cal.n_estimates}**. False collateral flags: **${cal.false_collateral}/${cal.n_estimates}**. 95% CI contains 1.0: **${cal.ci_contains_1}/${cal.n_estimates}** (nominal 95%). Largest A/A difference: ${cal.max_abs_change_pct}% (on the UPDATE). Verdict counts: ${Object.entries(cal.verdict_counts).map(([k, v]) => `${k} ${v}`).join(", ")}.` },
-    { t: "img", file: "chart_calibration.png", width: 600, caption: "Figure 14.4: Every A/A estimate with its 95% CI. None reaches the SUPPORTED or veto lines with its whole interval." },
+    { t: "img", file: "chart_calibration.png", width: 600, caption: "Figure 14.5: Every A/A estimate with its 95% CI. None reaches the SUPPORTED or veto lines with its whole interval." },
   );
   if (rep) {
     const rows = rep.candidates.map((c) => {
@@ -116,26 +166,26 @@ module.exports = () => {
         `**${st.consolidated || "?"}**`];
     });
     blocks.push(
-      { t: "h2", text: "14.5 Replication: are single-run verdicts stable?" },
+      { t: "h2", text: "14.6 Replication: are single-run verdicts stable?" },
       { t: "p", text: `Each tested candidate was re-run ${rep.repeats} more times with fresh twin databases and new shuffle seeds (${path.dirname(repFile)}). The consolidated verdict is the common label if all runs agree, otherwise UNSTABLE (D-023). In the table, S = SUPPORTED, R = REJECTED, I = INCONCLUSIVE; "vetoed by" names the query with a collateral regression.` },
       { t: "table", headers: ["Scen.", "Candidate", "Original (target ratio)", "Replications (target ratio)", "Consolidated"], widths: [0.5, 2.2, 1.2, 2, 1], rows },
-      { t: "img", file: "chart_replication.png", width: 600, caption: "Figure 14.5: Target time ratio per run; colour is the verdict of that run." },
+      { t: "img", file: "chart_replication.png", width: 600, caption: "Figure 14.6: Target time ratio per run; colour is the verdict of that run." },
       { t: "callout", kind: "key", text: "Verdicts far from a decision margin replicate perfectly. Verdicts that depend on an effect close to a margin (a ~10–25% write slowdown against a 10% veto) flip between runs. Report those as UNSTABLE and let a human decide, or pool more runs. Never present one run's verdict as settled." },
     );
   }
   if (tpch) {
     const rows = tpch.scenarios.map((s) => scenRow(s));
     blocks.push(
-      { t: "h2", text: "14.6 External validation on TPC-H" },
+      { t: "h2", text: "14.7 External validation on TPC-H" },
       { t: "p", text: `Same engine, same rules, same thresholds, applied to the TPC-H benchmark (${tpch.scale}, data from \`tpchgen-cli\`; ${path.dirname(tpchFile)}). Nothing was tuned for TPC-H.` },
       { t: "table", headers: ["Scenario", "Measured effect on its query", "Detected", "False alarms before fault", "Diagnosis", "Candidate → verdict"], widths: [0.7, 0.9, 1.2, 0.7, 1.1, 3.2], rows },
-      { t: "img", file: "chart_tpch.png", width: 600, caption: "Figure 14.6: Measured effect of each TPC-H fault on its query." },
+      { t: "img", file: "chart_tpch.png", width: 600, caption: "Figure 14.7: Measured effect of each TPC-H fault on its query." },
     );
   }
   blocks.push(
-    { t: "h2", text: `${tpch ? "14.7" : "14.6"} Similarity search` },
+    { t: "h2", text: `${tpch ? "14.8" : "14.7"} Similarity search` },
     { t: "p", text: `On 30 hand-written queries in 6 structural families: recall@1 ${sim[0].recall_at_k_structural} vs ${sim[0].recall_at_k_text_jaccard} for a text baseline (token Jaccard); recall@4 ${sim[2].recall_at_k_structural} vs ${sim[2].recall_at_k_text_jaccard}. The families were written by the same author as the features, so this shows the features behave as designed, not that they generalise.` },
-    { t: "h2", text: `${tpch ? "14.8" : "14.7"} The superseded first run` },
+    { t: "h2", text: `${tpch ? "14.9" : "14.8"} The superseded first run` },
     { t: "p", text: `The first full evaluation (20261102T184027Z) is kept for the record. It differed because of two bugs found in it: F-7 (S5 guardrail sampling gap → S5 SUPPORTED) and F-8 (queries mapped to an earlier scenario's database → fake "false positives" in S5 and S6). It also measured S4's write slowdown at +13% (SUPPORTED with a warning), where the corrected run measured +23% (REJECTED). That disagreement is what motivated replication.` },
   );
 
@@ -194,7 +244,7 @@ module.exports = () => {
       "**Diagnosis:** I parse EXPLAIN ANALYZE JSON into a tree, compute q-errors and spills, and explainable rules produce hypotheses plus candidates.",
       "**Experiment:** template-copied twin databases so layout and statistics are identical; alternating blocks; a result-equivalence check; a paired block bootstrap; a decision rule fixed in advance.",
       "**Guardrail:** HypoPG finds which other queries, and which parameter values, would change plan; those plus writes are benchmarked with Bonferroni correction and a 10% veto.",
-      "**Honesty:** A/A calibration, replication, TPC-H validation, and ten documented mistakes, including two runs where the headline result was wrong and how I found out.",
+      "**Honesty:** A/A calibration, replication, TPC-H validation, and twelve documented mistakes, including two runs where the headline result was wrong and how I found out.",
     ] },
     { t: "h2", text: "18.3 How to demo it" },
     { t: "steps", ref: "steps21", items: [

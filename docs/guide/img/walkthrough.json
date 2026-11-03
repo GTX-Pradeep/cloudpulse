@@ -1,0 +1,456 @@
+{
+ "incident": {
+  "id": 8,
+  "scenario": "s5_created_at_index_dropped",
+  "template_name": "recent_orders_feed",
+  "query_text": "SELECT id, customer_id, amount FROM orders WHERE created_at > $1 ORDER BY created_at DESC LIMIT $2",
+  "queryid": -2728112807911579718,
+  "baseline_median_ms": 0.03924025000000002,
+  "baseline_mad_ms": 0.009605499999999975,
+  "current_ms": 244.54414199999997,
+  "ratio": 6231.9720694949665,
+  "evidence": {
+   "z": 4890.098034999999,
+   "config": {
+    "window": 20,
+    "min_calls": 1,
+    "min_ratio": 1.5,
+    "rel_floor": 0.05,
+    "sustain_k": 3,
+    "sustain_n": 4,
+    "z_threshold": 4.0,
+    "abs_floor_ms": 0.05,
+    "min_baseline": 8
+   },
+   "series": [
+    0.0336355,
+    0.0334165,
+    0.030905000000000002,
+    0.03325700000000001,
+    0.03497449999999999,
+    0.05984700000000004,
+    0.03002450000000001,
+    0.052785499999999985,
+    0.06149450000000001,
+    0.05682900000000002,
+    0.043506000000000045,
+    0.05592750000000002,
+    0.07597799999999999,
+    0.029245000000000076,
+    153.26897050000002,
+    257.8347545,
+    244.54414199999997,
+    247.96900649999998,
+    237.61419799999987,
+    141.47944350000012,
+    157.60721200000012,
+    338.819334
+   ],
+   "plan_summary": {
+    "indexes": [],
+    "relations": [
+     "orders"
+    ],
+    "node_count": 4,
+    "node_types": [
+     "Gather Merge",
+     "Limit",
+     "Seq Scan",
+     "Sort"
+    ],
+    "shared_hit": 9155,
+    "total_cost": 34493.63,
+    "max_q_error": 148.24,
+    "shared_read": 13867,
+    "execution_ms": 194.246
+   },
+   "anomalous_points": [
+    14,
+    15,
+    16
+   ],
+   "detected_at_interval": 16,
+   "plan_changed_since_baseline": true
+  },
+  "status": "no_action",
+  "outcome": "no candidate supported (REJECTED)",
+  "detected_at": "2026-11-02 19:20:11.474952+00:00"
+ },
+ "plan": {
+  "fingerprint": "699f9e4a77eed669",
+  "params": [
+   "2025-12-30 01:18:26.065835+00:00"
+  ],
+  "plan": {
+   "Plan": {
+    "Plans": [
+     {
+      "Plans": [
+       {
+        "Plans": [
+         {
+          "Alias": "orders",
+          "Filter": "(created_at > '2025-12-30 01:18:26.065835+00'::timestamp with time zone)",
+          "Workers": [],
+          "Node Type": "Seq Scan",
+          "Plan Rows": 3706,
+          "Plan Width": 30,
+          "Total Cost": 33364.67,
+          "Actual Rows": 3034,
+          "Actual Loops": 3,
+          "Startup Cost": 0.0,
+          "Async Capable": false,
+          "I/O Read Time": 65.745,
+          "Relation Name": "orders",
+          "I/O Write Time": 0.0,
+          "Parallel Aware": true,
+          "Local Hit Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Actual Total Time": 177.361,
+          "Local Read Blocks": 0,
+          "Shared Hit Blocks": 9081,
+          "Shared Read Blocks": 13867,
+          "Temp I/O Read Time": 0.0,
+          "Actual Startup Time": 132.992,
+          "Parent Relationship": "Outer",
+          "Temp I/O Write Time": 0.0,
+          "Temp Written Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Rows Removed by Filter": 663633
+         }
+        ],
+        "Workers": [
+         {
+          "Sort Method": "top-N heapsort",
+          "Worker Number": 0,
+          "Sort Space Type": "Memory",
+          "Sort Space Used": 32
+         },
+         {
+          "Sort Method": "top-N heapsort",
+          "Worker Number": 1,
+          "Sort Space Type": "Memory",
+          "Sort Space Used": 32
+         }
+        ],
+        "Sort Key": [
+         "created_at DESC"
+        ],
+        "Node Type": "Sort",
+        "Plan Rows": 3706,
+        "Plan Width": 30,
+        "Total Cost": 33497.04,
+        "Actual Rows": 50,
+        "Sort Method": "top-N heapsort",
+        "Actual Loops": 3,
+        "Startup Cost": 33487.78,
+        "Async Capable": false,
+        "I/O Read Time": 65.745,
+        "I/O Write Time": 0.0,
+        "Parallel Aware": false,
+        "Sort Space Type": "Memory",
+        "Sort Space Used": 32,
+        "Local Hit Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Actual Total Time": 180.129,
+        "Local Read Blocks": 0,
+        "Shared Hit Blocks": 9155,
+        "Shared Read Blocks": 13867,
+        "Temp I/O Read Time": 0.0,
+        "Actual Startup Time": 180.122,
+        "Parent Relationship": "Outer",
+        "Temp I/O Write Time": 0.0,
+        "Temp Written Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0
+       }
+      ],
+      "Node Type": "Gather Merge",
+      "Plan Rows": 7412,
+      "Plan Width": 30,
+      "Total Cost": 35352.59,
+      "Actual Rows": 50,
+      "Actual Loops": 1,
+      "Startup Cost": 34487.8,
+      "Async Capable": false,
+      "I/O Read Time": 65.745,
+      "I/O Write Time": 0.0,
+      "Parallel Aware": false,
+      "Workers Planned": 2,
+      "Local Hit Blocks": 0,
+      "Temp Read Blocks": 0,
+      "Workers Launched": 2,
+      "Actual Total Time": 194.16,
+      "Local Read Blocks": 0,
+      "Shared Hit Blocks": 9155,
+      "Shared Read Blocks": 13867,
+      "Temp I/O Read Time": 0.0,
+      "Actual Startup Time": 189.048,
+      "Parent Relationship": "Outer",
+      "Temp I/O Write Time": 0.0,
+      "Temp Written Blocks": 0,
+      "Local Dirtied Blocks": 0,
+      "Local Written Blocks": 0,
+      "Shared Dirtied Blocks": 0,
+      "Shared Written Blocks": 0
+     }
+    ],
+    "Node Type": "Limit",
+    "Plan Rows": 50,
+    "Plan Width": 30,
+    "Total Cost": 34493.63,
+    "Actual Rows": 50,
+    "Actual Loops": 1,
+    "Startup Cost": 34487.8,
+    "Async Capable": false,
+    "I/O Read Time": 65.745,
+    "I/O Write Time": 0.0,
+    "Parallel Aware": false,
+    "Local Hit Blocks": 0,
+    "Temp Read Blocks": 0,
+    "Actual Total Time": 194.198,
+    "Local Read Blocks": 0,
+    "Shared Hit Blocks": 9155,
+    "Shared Read Blocks": 13867,
+    "Temp I/O Read Time": 0.0,
+    "Actual Startup Time": 189.051,
+    "Temp I/O Write Time": 0.0,
+    "Temp Written Blocks": 0,
+    "Local Dirtied Blocks": 0,
+    "Local Written Blocks": 0,
+    "Shared Dirtied Blocks": 0,
+    "Shared Written Blocks": 0
+   },
+   "Planning": {
+    "I/O Read Time": 0.0,
+    "I/O Write Time": 0.0,
+    "Local Hit Blocks": 0,
+    "Temp Read Blocks": 0,
+    "Local Read Blocks": 0,
+    "Shared Hit Blocks": 0,
+    "Shared Read Blocks": 0,
+    "Temp I/O Read Time": 0.0,
+    "Temp I/O Write Time": 0.0,
+    "Temp Written Blocks": 0,
+    "Local Dirtied Blocks": 0,
+    "Local Written Blocks": 0,
+    "Shared Dirtied Blocks": 0,
+    "Shared Written Blocks": 0
+   },
+   "Triggers": [],
+   "Planning Time": 0.128,
+   "Execution Time": 194.246
+  },
+  "findings": [
+   {
+    "kind": "filtered_seq_scan",
+    "detail": {
+     "filter": "(created_at > '2025-12-30 01:18:26.065835+00'::timestamp with time zone)",
+     "rows_kept": 9102,
+     "selectivity": 0.004550997724501138,
+     "rows_examined": 2000001,
+     "filter_columns": [
+      "created_at"
+     ],
+     "equality_columns": []
+    },
+    "relation": "orders",
+    "node_type": "Seq Scan"
+   },
+   {
+    "kind": "hotspot",
+    "detail": {
+     "share": 2.739,
+     "self_time_ms": 532.083
+    },
+    "relation": "orders",
+    "node_type": "Seq Scan"
+   }
+  ]
+ },
+ "diagnoses": [
+  {
+   "rule": "selective_seq_scan",
+   "hypothesis": "Seq Scan on orders examined 2,000,001 rows to keep 9,102 (0.46%). An index on orders(created_at) could let PostgreSQL read only matching rows.",
+   "limitations": "Selectivity comes from one captured execution and its parameters; other parameter values may be less selective. An index also costs storage and write maintenance, which the guardrail must measure."
+  }
+ ],
+ "candidates": [
+  {
+   "description": "CREATE INDEX ON orders (created_at)",
+   "setup_sql": [
+    "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)"
+   ],
+   "hypopg": {
+    "details": {
+     "params_checked": 60,
+     "plans_changed_per_query": {
+      "latest_orders_for_customer": 21
+     }
+    },
+    "index_ddl": "CREATE INDEX cp_orders_created_at_idx ON orders (created_at)",
+    "affected_reads": [
+     "latest_orders_for_customer"
+    ],
+    "changed_params": {
+     "latest_orders_for_customer": [
+      [
+       23
+      ],
+      [
+       1
+      ],
+      [
+       2
+      ],
+      [
+       3
+      ],
+      [
+       4
+      ],
+      [
+       5
+      ],
+      [
+       6
+      ],
+      [
+       7
+      ],
+      [
+       8
+      ],
+      [
+       9
+      ]
+     ]
+    },
+    "used_by_target": true,
+    "writes_on_table": [
+     "touch_order"
+    ],
+    "target_cost_after": 2.4045,
+    "target_cost_before": 34439.004499999995
+   },
+   "run_dir": "/home/claude/cloudpulse/results/runs/20261102T192017Z_cand8_recent_orders_feed",
+   "label": "REJECTED",
+   "reason": "target improved (95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)) but 1 tracked query regressed beyond +10%: worst is latest_orders_for_customer at 5.66x (adjusted CI [4.95, 6.53])",
+   "target": {
+    "label": "SUPPORTED",
+    "effect": {
+     "query": "recent_orders_feed",
+     "ratio": 0.0033396935898629475,
+     "ci_low": 0.0030427395952157227,
+     "ci_high": 0.003645439614633762,
+     "n_blocks": 15,
+     "change_pct": -99.67,
+     "confidence": 0.95,
+     "timeouts_a": 0,
+     "timeouts_b": 0,
+     "median_us_a": 126449.95999999999,
+     "median_us_b": 417.65,
+     "block_ratios": [
+      0.0025,
+      0.0023,
+      0.0037,
+      0.0035,
+      0.0044,
+      0.0033,
+      0.0033,
+      0.0027,
+      0.0035,
+      0.0037,
+      0.0035,
+      0.0034,
+      0.003,
+      0.0034,
+      0.0045
+     ]
+    },
+    "reason": "95% CI of time ratio B/A = [0.003, 0.004] lies entirely below 0.95 (>= 5% faster)"
+   },
+   "guardrail": {
+    "queries": [
+     {
+      "query": "latest_orders_for_customer",
+      "ratio": 5.6646469059952205,
+      "ci_low": 4.945658989546843,
+      "weight": 20,
+      "ci_high": 6.528251911026483,
+      "n_blocks": 15,
+      "change_pct": 466.46,
+      "confidence": 0.975,
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "median_us_a": 968.995,
+      "median_us_b": 838.2149999999999,
+      "block_ratios": [
+       5.2536,
+       3.5357,
+       6.1791,
+       5.3471,
+       8.3502,
+       4.9359,
+       6.7436,
+       4.6235,
+       5.7192,
+       4.3627,
+       5.428,
+       5.0443,
+       9.6479,
+       5.8903,
+       6.4802
+      ],
+      "collateral_regression": true
+     },
+     {
+      "query": "touch_order",
+      "ratio": 1.0474355694127149,
+      "ci_low": 1.001049981987876,
+      "weight": 20,
+      "ci_high": 1.0849813522200655,
+      "n_blocks": 15,
+      "change_pct": 4.74,
+      "confidence": 0.975,
+      "timeouts_a": 0,
+      "timeouts_b": 0,
+      "median_us_a": 362.96,
+      "median_us_b": 385.46500000000003,
+      "block_ratios": [
+       1.0337,
+       1.0205,
+       1.0604,
+       1.045,
+       1.0274,
+       1.012,
+       1.0926,
+       1.0956,
+       1.1095,
+       0.846,
+       1.0666,
+       1.0942,
+       1.1699,
+       1.0391,
+       1.0343
+      ],
+      "collateral_regression": false
+     }
+    ],
+    "warnings": [
+     "touch_order"
+    ],
+    "collateral": [
+     "latest_orders_for_customer"
+    ],
+    "weighted_change_pct": -81.86
+   }
+  }
+ ],
+ "n_raw_timings": 2100
+}
