@@ -130,7 +130,16 @@
         "REJECTED": 1,
         "SUPPORTED": 2
       },
-      "agrees_with_original": 2
+      "agrees_with_original": 2,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "SUPPORTED": 3,
+          "REJECTED": 1
+        },
+        "stable": false,
+        "consolidated": "UNSTABLE"
+      }
     },
     {
       "scenario": "s1_dropped_fk_index",
@@ -233,7 +242,15 @@
       "labels": {
         "SUPPORTED": 3
       },
-      "agrees_with_original": 3
+      "agrees_with_original": 3,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "SUPPORTED": 4
+        },
+        "stable": true,
+        "consolidated": "SUPPORTED"
+      }
     },
     {
       "scenario": "s2_stale_statistics",
@@ -414,7 +431,15 @@
       "labels": {
         "SUPPORTED": 3
       },
-      "agrees_with_original": 3
+      "agrees_with_original": 3,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "SUPPORTED": 4
+        },
+        "stable": true,
+        "consolidated": "SUPPORTED"
+      }
     },
     {
       "scenario": "s4_updated_at_index_dropped",
@@ -496,7 +521,16 @@
       "labels": {
         "SUPPORTED": 3
       },
-      "agrees_with_original": 0
+      "agrees_with_original": 0,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "REJECTED": 1,
+          "SUPPORTED": 3
+        },
+        "stable": false,
+        "consolidated": "UNSTABLE"
+      }
     },
     {
       "scenario": "s5_created_at_index_dropped",
@@ -599,7 +633,15 @@
       "labels": {
         "REJECTED": 3
       },
-      "agrees_with_original": 3
+      "agrees_with_original": 3,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "REJECTED": 4
+        },
+        "stable": true,
+        "consolidated": "REJECTED"
+      }
     },
     {
       "scenario": "s6_noisy_neighbor",
@@ -675,7 +717,15 @@
       "labels": {
         "SUPPORTED": 3
       },
-      "agrees_with_original": 3
+      "agrees_with_original": 3,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "SUPPORTED": 4
+        },
+        "stable": true,
+        "consolidated": "SUPPORTED"
+      }
     },
     {
       "scenario": "s6_noisy_neighbor",
@@ -727,7 +777,15 @@
       "labels": {
         "REJECTED": 3
       },
-      "agrees_with_original": 3
+      "agrees_with_original": 3,
+      "stability": {
+        "runs": 4,
+        "counts": {
+          "REJECTED": 4
+        },
+        "stable": true,
+        "consolidated": "REJECTED"
+      }
     }
   ]
 }

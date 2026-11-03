@@ -205,6 +205,17 @@ something did not work. Code comments refer to these IDs (`D-0xx`, `F-x`).
   technical core. A separate JavaScript toolchain would double the build and test
   surface for no functional gain.
 
+### D-023 · Replicate verdicts; report UNSTABLE when runs disagree
+- **Decision:** `cloudpulse replicate` re-runs every tested candidate (3 extra runs,
+  fresh twins, new shuffle seeds). The consolidated verdict is the shared label if all
+  runs agree, otherwise **UNSTABLE**, which means a human should decide.
+- **Why:** the A/A calibration showed that noise between runs exceeds what a single
+  run's interval reflects (F-5), and two runs of the same S4 experiment had already
+  disagreed (F-11).
+- **Alternatives:** majority vote (hides the disagreement); pooling all blocks into
+  one interval (treats runs as interchangeable and ignores run-level variance; a
+  hierarchical model would be the principled version).
+
 ---
 
 ## Failed hypotheses and lessons
@@ -311,3 +322,17 @@ series has one interval fewer than the number of rounds. The evaluation counted
 the fault's position from the round count and reported delays one interval too
 early. Fixed by counting from the end of the series. Results recorded before the
 fix are corrected explicitly (`delay_offset_corrected` in `summary.json`).
+
+### F-11 · Verdicts near a decision margin flip between runs
+Replication (`results/replication/20261103T014630Z`, run on a 2.30 GHz host after the
+sandbox restarted; the main evaluation ran on a 2.80 GHz host) re-ran the seven tested
+candidates three times each.
+- **Stable (4 of 4 runs agree):** S5's `created_at` index REJECTED every time
+  (collateral 4.4×–5.7×); `ANALYZE orders` SUPPORTED (target 0.43–0.45); the composite
+  index SUPPORTED; the S6 `status` index SUPPORTED; `work_mem` REJECTED.
+- **UNSTABLE:** S4's `updated_at` index: the UPDATE was **consistently +17% to +23%
+  slower in all four runs**, but the lower end of its adjusted CI landed at 1.09–1.15,
+  straddling the 1.10 veto line, so the verdict flipped (1 REJECTED, 3 SUPPORTED).
+  S1's `customer_id` index: UPDATE +15% to +44% (one run vetoed).
+- **Lesson:** the *effect* was reproducible; its *classification* was not, because it
+  sits on a threshold. Report the stability of a verdict, not only the verdict.
